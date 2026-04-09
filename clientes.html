@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clientes</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#E13C96',
+            secondary: '#8AC440',
+          }
+        }
+      }
+    }
+  </script>
+
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+
+<body class="bg-gray-50 text-gray-800 font-['Inter',_sans-serif]">
+
+<!-- NAVBAR -->
+<div id="navbar"></div>
+
+<main class="pt-28 px-4 pb-10 max-w-6xl mx-auto">
+
+  <!-- HEADER -->
+  <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
+    <h2 class="text-2xl md:text-3xl font-bold">Clientes</h2>
+
+    <div class="flex gap-2 w-full md:w-auto">
+      <input id="searchInput" type="text" placeholder="Buscar..."
+        class="w-full md:w-64 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary outline-none">
+
+      <button id="openModal"
+        class="inline-flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl shadow-md hover:scale-105 transition">
+        <i data-lucide="plus"></i>
+        Nuevo
+      </button>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-xl shadow overflow-hidden">
+
+    <!-- TABLA -->
+    <div id="tablaContainer" class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-100 text-left">
+          <tr>
+            <th class="p-3">Nombre</th>
+            <th class="p-3">Teléfono</th>
+            <th class="p-3">Dirección</th>
+            <th class="p-3">Departamento</th>
+            <th class="p-3 text-center">Estado</th>
+            <th class="p-3 text-center">Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="clientesTable"></tbody>
+      </table>
+    </div>
+
+    <!-- CARDS MOBILE -->
+    <div id="cardsContainer" class="hidden p-3 space-y-3"></div>
+
+</div>
+
+</main>
+
+<!-- MODAL -->
+<div id="modal" class="fixed inset-0 bg-black/40 hidden items-center justify-center z-50">
+  <div class="bg-white w-full max-w-md rounded-xl p-6 shadow-xl">
+
+    <h3 id="modalTitle" class="text-xl font-semibold mb-4">Nuevo Cliente</h3>
+
+    <form id="clienteForm" class="space-y-3">
+
+      <input type="text" id="nombre" placeholder="Nombre" required
+        class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-primary">
+
+      <input type="text" id="telefono" placeholder="Teléfono"
+        class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-primary">
+
+      <input type="text" id="direccion" placeholder="Dirección"
+        class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-primary">
+
+      <input type="text" id="departamento" placeholder="Departamento"
+        class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-primary">
+
+      <div class="flex justify-end gap-2 pt-3">
+        <button type="button" id="closeModal"
+          class="px-4 py-2 border rounded-lg">Cancelar</button>
+
+        <button type="submit"
+          class="bg-primary text-white px-4 py-2 rounded-lg">Guardar</button>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+<!-- JS -->
+<script type="module" src="js/clientes.js"></script>
+
+<!-- NAVBAR -->
+<script>
+fetch('components/navbar.html')
+  .then(res => res.text())
+  .then(data => {
+    document.getElementById('navbar').innerHTML = data;
+
+    lucide.createIcons();
+
+    const btn = document.getElementById('menuBtn');
+    const menu = document.getElementById('mobileMenu');
+
+    if (btn && menu) {
+      btn.addEventListener('click', () => {
+        menu.classList.toggle('hidden');
+        menu.classList.toggle('flex');
+      });
+    }
+  });
+</script>
+
+</body>
+</html>

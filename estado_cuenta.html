@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Estado de Cuenta</title>
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#E13C96',
+            secondary: '#8AC440',
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Iconos -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
+
+<body class="bg-gray-50 text-gray-800 font-['Inter',_sans-serif]">
+
+<!-- =============================
+     NAVBAR
+============================= -->
+<div id="navbar"></div>
+
+<!-- =============================
+     CONTENIDO
+============================= -->
+<main class="pt-28 px-4 pb-10 max-w-6xl mx-auto">
+
+  <h2 class="text-2xl font-bold mb-6">Estado de Cuenta</h2>
+
+  <!-- CLIENTE -->
+  <h3 id="nombreCliente"
+    class="text-lg font-semibold mb-6 text-gray-700">
+  </h3>
+
+  <!-- =============================
+       RESUMEN
+  ============================== -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+
+    <div class="bg-white p-4 rounded-xl shadow">
+      <p class="text-sm text-gray-500">Total Facturado</p>
+      <p id="totalFacturado"
+        class="text-xl font-bold text-purple-600">
+        C$  0.00
+      </p>
+    </div>
+
+    <div class="bg-white p-4 rounded-xl shadow">
+      <p class="text-sm text-gray-500">Total Pagado</p>
+      <p id="totalPagado"
+        class="text-xl font-bold text-green-600">
+        C$  0.00
+      </p>
+    </div>
+
+    <div class="bg-white p-4 rounded-xl shadow">
+      <p class="text-sm text-gray-500">Debe</p>
+      <p id="totalDebe"
+        class="text-xl font-bold text-red-600">
+        C$  0.00
+      </p>
+    </div>
+
+  </div>
+
+
+
+  <!-- =============================
+      FILTROS PRO
+  ============================= -->
+  <div class="bg-white p-4 rounded-2xl shadow mb-6 space-y-4">
+
+    <!-- BUSCADOR + FECHA -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+
+      <!-- BUSCAR -->
+      <div class="relative">
+        <input id="buscarNumero"
+          type="text"
+          placeholder="Buscar factura..."
+          class="w-full pl-10 pr-3 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/40">
+
+        <i data-lucide="search"
+          class="absolute left-3 top-2.5 w-4 h-4 text-gray-400"></i>
+      </div>
+
+      <!-- FECHA -->
+      <input id="filtroFecha"
+        type="date"
+        class="w-full py-2 px-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/40">
+
+    </div>
+
+    <!-- ESTADOS BONITOS -->
+    <div class="flex flex-wrap gap-2">
+
+      <button id="filtroTodos"
+        class="filtro-btn px-4 py-1.5 rounded-full border text-sm focus:outline-none">
+        Todos
+      </button>
+
+      <button id="filtroPendiente"
+        class="filtro-btn px-4 py-1.5 rounded-full bg-yellow-100 text-yellow-700 text-sm focus:outline-none">
+        Pendiente
+      </button>
+
+      <button id="filtroAbonado"
+        class="filtro-btn px-4 py-1.5 rounded-full bg-blue-100 text-blue-700 text-sm focus:outline-none">
+        Abonado
+      </button>
+
+      <button id="filtroPagado"
+        class="filtro-btn px-4 py-1.5 rounded-full bg-green-100 text-green-700 text-sm focus:outline-none">
+        Pagado
+      </button>
+
+    </div>
+
+  </div>
+
+
+
+  <!-- =============================
+       LISTA FACTURAS + ABONOS
+  ============================== -->
+  <div id="listaFacturas" class="space-y-6"></div>
+
+</main>
+
+<!-- =============================
+     MODAL ABONO (BONITO )
+============================= -->
+<div id="modalAbono"
+  class="fixed inset-0 bg-black/40 hidden items-center justify-center z-50">
+
+  <div class="bg-white p-6 rounded-xl w-full max-w-sm shadow-xl">
+
+    <h3 class="text-lg font-semibold mb-4">
+      Realizar Abono
+    </h3>
+
+    <p class="text-sm text-gray-500 mb-2">
+      Pendiente:
+    </p>
+
+    <p id="modalPendiente"
+      class="text-xl font-bold text-red-500 mb-4">
+    </p>
+
+    <input id="inputAbono"
+      type="number"
+      placeholder="Monto a abonar"
+      class="w-full p-2 border rounded-lg mb-4">
+
+    <p class="text-sm text-gray-500 mb-1">
+      Restante:
+    </p>
+
+    <p id="modalRestante"
+      class="text-lg font-bold text-blue-600 mb-4">
+      C$ 0.00
+    </p>
+
+    <div class="flex justify-end gap-2">
+
+      <button id="cancelarAbono"
+        class="border px-4 py-2 rounded-lg">
+        Cancelar
+      </button>
+
+      <button id="confirmarAbono"
+        class="bg-secondary text-white px-4 py-2 rounded-lg">
+        Guardar
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<div id="modalSuccess"
+  class="fixed inset-0 bg-black/40 hidden items-center justify-center z-50">
+
+  <div class="bg-white p-6 rounded-xl text-center w-full max-w-sm">
+
+    <h3 class="text-lg font-semibold mb-3">
+      Abono guardado correctamente
+    </h3>
+
+    <p class="text-sm text-gray-500 mb-4">
+      ¿Deseas descargar el comprobante?
+    </p>
+
+    <div class="flex justify-center gap-2">
+      <button id="descargarAbonoPDF"
+        class="bg-secondary text-white px-4 py-2 rounded">
+        Descargar
+      </button>
+
+      <button id="cerrarSuccess"
+        class="border px-4 py-2 rounded">
+        Cancelar
+      </button>
+    </div>
+
+  </div>
+</div>
+
+
+<div id="modalAbonoDetalle"
+  class="fixed inset-0 hidden items-center justify-center bg-black/50 z-50">
+
+  <div class="bg-white w-96 rounded-2xl p-5 shadow-xl space-y-4">
+
+    <div class="flex justify-between items-center">
+      <h2 class="text-lg font-bold text-gray-800">Detalle del Abono</h2>
+
+      <button onclick="cerrarModalAbonoDetalle()">✕</button>
+    </div>
+
+    <div id="contenidoAbonoDetalle"></div>
+
+  </div>
+
+</div>
+
+<!-- =============================
+     NAVBAR SCRIPT
+============================= -->
+<script>
+fetch('components/navbar.html')
+  .then(res => res.text())
+  .then(data => {
+    document.getElementById('navbar').innerHTML = data;
+
+    lucide.createIcons();
+
+    const btn = document.getElementById('menuBtn');
+    const menu = document.getElementById('mobileMenu');
+
+    if (btn && menu) {
+      btn.addEventListener('click', () => {
+        menu.classList.toggle('hidden');
+        menu.classList.toggle('flex');
+      });
+    }
+  });
+</script>
+
+<!-- =============================
+     JS
+============================= -->
+<script type="module" src="js/estado_cuenta.js"></script>
+
+</body>
+</html>

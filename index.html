@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistema de Facturación</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#E13C96',
+            secondary: '#8AC440',
+            // text-gray-800 y bg-white de Tailwind ya cubren tus básicos
+          }
+        }
+      }
+    }
+  </script>
+  
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+
+<body class="bg-white text-gray-800 font-['Inter',_sans-serif]">
+
+<div id="navbar"></div>
+
+<main class="pt-28 px-6 pb-10">
+  <div class="max-w-xl mx-auto text-center">
+
+    <h2 class="text-3xl md:text-4xl font-bold mb-6">
+      Bienvenida
+    </h2>
+
+    <p class="mb-10 text-gray-500 text-lg">
+      Gestiona tus facturas y clientes fácilmente
+    </p>
+
+    <a href="factura.html" 
+       class="inline-flex items-center justify-center gap-2 bg-primary text-white px-6 py-3 rounded-xl font-semibold shadow-lg shadow-primary/20 hover:scale-105 transition-transform duration-300">
+      <i data-lucide="plus" class="w-5 h-5"></i>
+      Nueva Factura
+    </a>
+
+  </div>
+</main>
+
+<script>
+// 1. Cargar el componente Navbar
+fetch('components/navbar.html')
+  .then(res => res.text())
+  .then(data => {
+    document.getElementById('navbar').innerHTML = data;
+
+    // 2. Activar iconos Lucide DESPUÉS de cargar el HTML
+    lucide.createIcons();
+
+    // 3. Activar lógica del menú móvil
+    const btn = document.getElementById('menuBtn');
+    const menu = document.getElementById('mobileMenu');
+
+    // Nos aseguramos de que existan los elementos antes de añadir el event listener
+    if (btn && menu) {
+      btn.addEventListener('click', () => {
+        // Alternamos la clase 'hidden' para mostrar/ocultar
+        menu.classList.toggle('hidden');
+        // Y alternamos 'flex' para que cuando se muestre, tenga el layout correcto
+        menu.classList.toggle('flex');
+      });
+    }
+  });
+</script>
+
+</body>
+</html>

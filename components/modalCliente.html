@@ -1,0 +1,36 @@
+<div id="modalCliente" class="fixed inset-0 bg-black/40 hidden items-center justify-center z-50">
+  <div class="bg-white p-6 rounded-xl w-full max-w-md shadow-xl">
+
+    <h3 id="modalClienteTitle" class="text-lg font-semibold mb-4">
+      Cliente
+    </h3>
+
+    <form id="formCliente" class="space-y-3">
+
+      <input id="nombreCliente" placeholder="Nombre" required
+        class="w-full p-2 border rounded-lg">
+
+      <input id="telefonoCliente" placeholder="Teléfono"
+        class="w-full p-2 border rounded-lg">
+
+      <input id="direccionCliente" placeholder="Dirección"
+        class="w-full p-2 border rounded-lg">
+
+      <input id="departamentoCliente" placeholder="Departamento"
+        class="w-full p-2 border rounded-lg">
+
+      <div class="flex justify-end gap-2">
+        <button type="button" id="closeModalCliente"
+          class="px-3 py-1 border rounded">
+          Cancelar
+        </button>
+
+        <button class="bg-primary text-white px-3 py-1 rounded">
+          Guardar
+        </button>
+      </div>
+
+    </form>
+
+  </div>
+</div>

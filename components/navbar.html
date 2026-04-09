@@ -1,0 +1,142 @@
+<nav class="bg-white/80 backdrop-blur-md shadow-md fixed w-full top-0 z-50 border-b border-gray-100">
+  
+  <div class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
+
+    <!--  LOGO CLICKABLE -->
+    <a href="index.html" class="flex items-center gap-3 group">
+      <img src="imagenes/logo.png" alt="Logo"
+        class="w-12 h-12 object-contain transition-transform duration-300 group-hover:scale-110">
+
+      <h1 class="text-lg md:text-xl font-bold tracking-tight text-primary transition-colors duration-300 group-hover:text-pink-600">
+        Sistema de Facturación 
+      </h1>
+    </a>
+
+    <!--  MENU DESKTOP -->
+    <div class="hidden md:flex items-center gap-6 font-medium">
+
+      <a href="index.html"
+        class="nav-link">
+        <i data-lucide="home" class="w-4 h-4"></i>
+        Inicio
+      </a>
+
+      <a href="clientes.html"
+        class="nav-link">
+        <i data-lucide="users" class="w-4 h-4"></i>
+        Clientes
+      </a>
+
+      <a href="his_factura.html"
+        class="nav-link">
+        <i data-lucide="file-text" class="w-4 h-4"></i>
+        Facturas
+      </a>
+
+      <a href="categoria_producto.html"
+        class="nav-link">
+        <i data-lucide="layout-grid" class="w-4 h-4"></i>
+        Categorías
+      </a>
+
+      <a href="subcategoria.html"
+        class="nav-link">
+        <i data-lucide="layout-grid" class="w-4 h-4"></i>
+        Subcategorías
+      </a>
+    </div>
+
+    <!-- BOTÓN MOBILE -->
+    <button id="menuBtn"
+      class="md:hidden text-gray-700 p-2 rounded-lg hover:bg-gray-100 transition">
+      <i data-lucide="menu"></i>
+    </button>
+
+  </div>
+
+  <!--  MENU MOBILE -->
+  <div id="mobileMenu"
+    class="hidden flex-col px-4 pb-4 md:hidden bg-white border-t border-gray-100 space-y-2 animate-fadeIn">
+
+    <a href="index.html" class="nav-mobile">
+      <i data-lucide="home"></i> Inicio
+    </a>
+
+    <a href="clientes.html" class="nav-mobile">
+      <i data-lucide="users"></i> Clientes
+    </a>
+
+    <a href="his_factura.html" class="nav-mobile">
+      <i data-lucide="file-text"></i> Facturas
+    </a>
+
+    <a href="categoria_producto.html" class="nav-mobile">
+      <i data-lucide="layout-grid"></i> Categorías
+    </a>
+
+    <a href="subcategoria.html" class="nav-mobile">
+      <i data-lucide="layout-grid"></i> Subcategorías
+    </a>
+
+  </div>
+</nav>
+
+<!-- ESTILOS EXTRA -->
+<style>
+  .nav-link {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #374151;
+    transition: all 0.3s ease;
+  }
+
+  .nav-link:hover {
+    color: #E13C96;
+  }
+
+  /*  línea animada debajo */
+  .nav-link::after {
+    content: "";
+    position: absolute;
+    bottom: -6px;
+    left: 0;
+    width: 0%;
+    height: 2px;
+    background: #E13C96;
+    transition: width 0.3s ease;
+  }
+
+  .nav-link:hover::after {
+    width: 100%;
+  }
+
+  /*  mobile */
+  .nav-mobile {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    color: #374151;
+    transition: all 0.25s ease;
+    font-weight: 500;
+  }
+
+  .nav-mobile:hover {
+    background: #f9fafb;
+    color: #E13C96;
+    transform: translateX(4px);
+  }
+
+  /* animación */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .animate-fadeIn {
+    animation: fadeIn 0.25s ease;
+  }
+</style>

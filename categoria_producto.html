@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Categorías</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#E13C96',
+            secondary: '#8AC440',
+          }
+        }
+      }
+    }
+  </script>
+
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+
+<body class="bg-gray-50 text-gray-800">
+
+<div id="navbar"></div>
+
+<main class="pt-28 px-4 pb-10 max-w-4xl mx-auto">
+
+  <!-- HEADER -->
+  <div class="flex justify-between items-center mb-6">
+    <h2 class="text-2xl font-bold">Categorías</h2>
+
+    <button id="openModal"
+      class="bg-primary text-white px-4 py-2 rounded-lg flex items-center gap-2">
+      <i data-lucide="plus"></i>
+      Nueva
+    </button>
+  </div>
+
+  <!-- TABLA -->
+  <div class="bg-white rounded-xl shadow overflow-hidden">
+    <table class="w-full text-sm">
+      <thead class="bg-gray-100 text-left">
+        <tr>
+          <th class="p-3">Nombre</th>
+          <th class="p-3 text-center">Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="tablaCategorias"></tbody>
+    </table>
+  </div>
+
+</main>
+
+<!-- MODAL -->
+<div id="modal" class="fixed inset-0 bg-black/40 hidden items-center justify-center">
+  <div class="bg-white p-6 rounded-xl w-full max-w-md">
+
+    <h3 id="modalTitle" class="text-lg font-semibold mb-4">Nueva Categoría</h3>
+
+    <form id="formCategoria" class="space-y-3">
+      <input type="text" id="nombre" placeholder="Nombre"
+        class="w-full p-2 border rounded-lg" required>
+
+      <div class="flex justify-end gap-2">
+        <button type="button" id="closeModal" class="px-3 py-1 border rounded">
+          Cancelar
+        </button>
+        <button class="bg-primary text-white px-3 py-1 rounded">
+          Guardar
+        </button>
+      </div>
+    </form>
+
+  </div>
+</div>
+
+<script type="module" src="js/categorias.js"></script>
+
+<!-- NAVBAR -->
+<script>
+fetch('components/navbar.html')
+  .then(res => res.text())
+  .then(data => {
+    document.getElementById('navbar').innerHTML = data;
+
+    lucide.createIcons();
+
+    const btn = document.getElementById('menuBtn');
+    const menu = document.getElementById('mobileMenu');
+
+    if (btn && menu) {
+      btn.addEventListener('click', () => {
+        menu.classList.toggle('hidden');
+        menu.classList.toggle('flex');
+      });
+    }
+  });
+</script>
+
+</body>
+</html>
