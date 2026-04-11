@@ -161,12 +161,26 @@
 
 <script type="module" src="js/factura.js"></script>
 
+<!-- =============================
+     NAVBAR SCRIPT
+============================= -->
 <script>
 fetch('components/navbar.html')
-  .then(r => r.text())
+  .then(res => res.text())
   .then(data => {
     document.getElementById('navbar').innerHTML = data;
+
     lucide.createIcons();
+
+    const btn = document.getElementById('menuBtn');
+    const menu = document.getElementById('mobileMenu');
+
+    if (btn && menu) {
+      btn.addEventListener('click', () => {
+        menu.classList.toggle('hidden');
+        menu.classList.toggle('flex');
+      });
+    }
   });
 </script>
 

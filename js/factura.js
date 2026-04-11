@@ -34,6 +34,7 @@ function esMobile() {
 // =============================
 let categorias = []
 let subcategorias = []
+let descripciones = []
 let total = 0
 let facturaGuardada = null
 
@@ -130,36 +131,58 @@ async function cargarClientes() {
 async function cargarData() {
   const { data: cat } = await supabase.from('categorias').select('*')
   const { data: sub } = await supabase.from('subcategorias').select('*')
+  const { data: descs } = await supabase
+    .from('productos_factura')
+    .select('descripcion, subcategoria_id')
 
   categorias = cat || []
   subcategorias = sub || []
+  descripciones = (descs || []).filter(d => d.descripcion)
 }
 
 // =============================
 // PRODUCTOS DROPDOWN
 // =============================
 function getProductoDropdown() {
-  return categorias.map(cat => {
+  return `
+    <div class="p-2 border-b">
+      <input type="text"
+        placeholder="Buscar..."
+        class="buscarSub w-full p-2 border rounded text-sm">
+    </div>
 
-    const subs = subcategorias
-      .filter(s => s.categoria_id == cat.id)
-      .map(s => `
-        <div class="p-2 hover:bg-gray-100 cursor-pointer sub-item"
-          data-id="${s.id}"
-          data-name="${s.nombre}">
-          ${s.nombre}
-        </div>
-      `).join('')
+    <div class="listaSub">
+      ${
+        categorias.map(cat => {
 
-    return `
-      <div class="border-b">
-        <div class="bg-gray-100 px-2 py-1 text-xs font-bold">
-          ${cat.nombre}
-        </div>
-        ${subs}
-      </div>
-    `
-  }).join('')
+          const subsUnicas = subcategorias
+          .filter(s => s.categoria_id == cat.id)
+          .filter((s, index, self) =>
+            index === self.findIndex(x => x.nombre === s.nombre)
+          )
+
+        const subs = subsUnicas.map(s => `
+          <div class="p-2 hover:bg-gray-100 cursor-pointer sub-item"
+            data-id="${s.id}"
+            data-name="${s.nombre}"
+            data-cat="${cat.nombre.toLowerCase()}"
+            data-sub="${s.nombre.toLowerCase()}">
+            ${s.nombre}
+          </div>
+        `).join('')
+
+          return `
+            <div class="bloque-cat">
+              <div class="bg-gray-100 px-2 py-1 text-xs font-bold">
+                ${cat.nombre}
+              </div>
+              ${subs}
+            </div>
+          `
+        }).join('')
+      }
+    </div>
+  `
 }
 
 // =============================
@@ -199,8 +222,12 @@ addBtn.onclick = () => {
       <!-- DESCRIPCIÓN -->
       <div>
         <label class="text-sm text-gray-500">Descripción</label>
+        <div class="relative">
         <input placeholder="Descripción"
           class="descripcion border p-2 w-full rounded-lg">
+
+        <div class="descList hidden absolute z-[9999] bg-white border w-full rounded-lg shadow max-h-40 overflow-auto"></div>
+      </div>
       </div>
 
       <!-- CANTIDAD Y PRECIO -->
@@ -261,7 +288,12 @@ addBtn.onclick = () => {
       </td>
 
       <td class="p-2">
-        <input class="descripcion border p-1 w-full">
+        <div class="relative">
+        <input class="descripcion border p-2 w-full rounded-lg"
+          placeholder="Descripción">
+
+        <div class="descList hidden absolute z-[9999] bg-white border w-full rounded-lg shadow max-h-40 overflow-auto"></div>
+      </div>
       </td>
 
       <td class="p-2">
@@ -289,9 +321,16 @@ addBtn.onclick = () => {
   lucide.createIcons()
 }
 
-document.addEventListener('click', () => {
-  document.querySelectorAll('.productoList').forEach(list => {
-    list.classList.add('hidden')
+document.addEventListener('click', (e) => {
+  document.querySelectorAll('.descList').forEach(list => {
+    const input = list.previousElementSibling
+
+    if (
+      !list.contains(e.target) &&
+      !input.contains(e.target)
+    ) {
+      list.classList.add('hidden')
+    }
   })
 })
 
@@ -300,27 +339,122 @@ function setupProductoLogic(container) {
   const btn = container.querySelector('.productoBtn')
   const list = container.querySelector('.productoList')
   const hidden = container.querySelector('.subcategoria')
-  const desc = container.querySelector('.descripcion')
+
+  const descInput = container.querySelector('.descripcion')
+  const descList = container.querySelector('.descList')
+
   const cant = container.querySelector('.cantidad')
   const precio = container.querySelector('.precio')
   const subtotal = container.querySelector('.subtotal')
 
+  let subcategoriaSeleccionada = null
+
+  // =============================
+  // ABRIR DROPDOWN
+  // =============================
   btn.onclick = (e) => {
-  e.stopPropagation()
-  list.classList.toggle('hidden')
+    e.stopPropagation()
+    list.classList.toggle('hidden')
+  }
+
+  // =============================
+  // BUSCADOR SUBCATEGORIA
+  // =============================
+  const buscar = list.querySelector('.buscarSub')
+
+if (buscar) {
+  buscar.addEventListener('input', () => {
+    const val = buscar.value.toLowerCase()
+
+    list.querySelectorAll('.bloque-cat').forEach(bloque => {
+
+      let hayVisible = false
+
+      bloque.querySelectorAll('.sub-item').forEach(item => {
+
+        const cat = item.dataset.cat
+        const sub = item.dataset.sub
+
+        const coincide =
+          cat.includes(val) || sub.includes(val)
+
+        item.style.display = coincide ? 'block' : 'none'
+
+        if (coincide) hayVisible = true
+      })
+
+      // ocultar toda la categoría si no hay coincidencias
+      bloque.style.display = hayVisible ? 'block' : 'none'
+    })
+  })
 }
 
-    list.querySelectorAll('.sub-item').forEach(item => {
+  if (buscar) {
+  buscar.addEventListener('click', (e) => {
+    e.stopPropagation()
+  })
+}
+
+  // =============================
+  // SELECCIONAR SUBCATEGORIA
+  // =============================
+  list.querySelectorAll('.sub-item').forEach(item => {
     item.onclick = () => {
       hidden.value = item.dataset.id
+      subcategoriaSeleccionada = item.dataset.id
+
       btn.querySelector('span').textContent = item.dataset.name
       btn.classList.remove('text-gray-500')
+
       list.classList.add('hidden')
 
-      desc.value = item.dataset.name
+      descInput.value = item.dataset.name
     }
   })
 
+  // =============================
+  // AUTOCOMPLETE DESCRIPCION
+  // =============================
+  function mostrarSugerencias(filtro) {
+
+    if (!subcategoriaSeleccionada) return
+
+    const sugerencias = descripciones
+      .filter(d =>
+        d.subcategoria_id == subcategoriaSeleccionada &&
+        d.descripcion.toLowerCase().includes(filtro.toLowerCase())
+      )
+      .slice(0, 5)
+
+    if (!sugerencias.length) {
+      descList.classList.add('hidden')
+      return
+    }
+
+    descList.innerHTML = sugerencias.map(d => `
+      <div class="p-2 hover:bg-gray-100 cursor-pointer">
+        ${d.descripcion}
+      </div>
+    `).join('')
+
+    descList.classList.remove('hidden')
+
+    descList.querySelectorAll('div').forEach(div => {
+      div.onclick = () => {
+        descInput.value = div.textContent.trim()
+        descList.classList.add('hidden')
+      }
+    })
+  }
+
+  descInput.addEventListener('input', (e) => {
+    mostrarSugerencias(e.target.value)
+  })
+
+
+  // =============================
+  // CALCULO
+  // =============================
   function calc() {
     subtotal.textContent = (cant.value * precio.value).toFixed(2)
     calcularTotal()
@@ -334,6 +468,7 @@ function setupProductoLogic(container) {
     calcularTotal()
   }
 }
+
 // =============================
 // TOTAL
 // =============================

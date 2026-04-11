@@ -128,6 +128,7 @@ async function cargarEstado() {
     .from('facturas')
     .select('*')
     .eq('cliente_id', clienteId)
+    .order('numero', { ascending: false })
 
   facturas = factData || []
 
@@ -292,7 +293,7 @@ function renderFacturas(listaData = facturas) {
         </p>
 
       <!-- BOTÓN ABONAR (CENTRADO Y BONITO) -->
-      <div class="flex justify-center">
+      <div class="flex justify-center gap-3">
 
         ${f.estado !== 'pagado' ? `
           <button onclick="abrirModalAbono('${f.id}', ${pendiente})"
