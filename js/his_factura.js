@@ -319,7 +319,22 @@ window.descargarPDFHistorial = async (id) => {
     `)
     .eq('factura_id', id)
 
-const temp = document.createElement('div')
+  // 3. ABONOS
+  const { data: abonos } = await supabase
+    .from('abonos')
+    .select('*')
+    .eq('factura_id', id)
+
+  const listaAbonos = abonos || []
+  listaAbonos.sort((a, b) => new Date(a.fecha) - new Date(b.fecha))
+
+  const totalAbonado = listaAbonos.reduce(
+    (sum, a) => sum + Number(a.monto), 0
+  )
+
+  const restante = Number(factura.total) - totalAbonado
+
+  const temp = document.createElement('div')
 
     temp.style.position = 'fixed'
     temp.style.top = '-10000px'
@@ -328,6 +343,61 @@ const temp = document.createElement('div')
     const totalCalculado = detalles.reduce(
       (acc, d) => acc + (d.cantidad * d.precio), 0
     )
+
+    let htmlAbonos = ''
+  
+    const colorRestante = restante > 0 ? 'text-red-600' : 'text-green-600'
+
+if (listaAbonos.length) {
+  htmlAbonos = `
+    <div style="margin-top:20px;">
+      <h3 style="font-size:13px; margin-bottom:8px;">
+        Historial de Abonos
+      </h3>
+
+      <table style="width:100%; border-collapse: collapse; font-size:11px;">
+        <thead>
+          <tr style="background:#f5f5f5;">
+            <th style="padding:6px; border-bottom:1px solid #ddd;">No.</th>
+            <th style="padding:6px; border-bottom:1px solid #ddd;">Fecha</th>
+            <th style="padding:6px; border-bottom:1px solid #ddd;">Monto</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          ${
+            listaAbonos.map((a, index) => `
+              <tr>
+                <td style="padding:5px; border-bottom:1px solid #eee;">
+                  ${factura.numero}.${index + 1}
+                </td>
+
+                <td style="padding:5px; border-bottom:1px solid #eee;">
+                  ${new Date(a.fecha).toLocaleDateString()}
+                </td>
+
+                <td style="padding:5px; text-align:right; border-bottom:1px solid #eee;">
+                  C$ ${Number(a.monto).toFixed(2)}
+                </td>
+              </tr>
+            `).join('')
+          }
+        </tbody>
+      </table>
+
+      <div style="margin-top:10px; font-size:12px;">
+        <p><b>Total abonado:</b> C$ ${totalAbonado.toFixed(2)}</p>
+        <p><b>Restante:</b> C$ ${restante.toFixed(2)}</p>
+      </div>
+    </div>
+  `
+}else{
+  htmlAbonos = `
+    <div style="margin-top:20px; font-size:12px; color:#666;">
+      <p><b>Sin abonos registrados</b></p>
+    </div>
+  `
+}
 
     temp.innerHTML = `
     <div style="
@@ -340,9 +410,9 @@ const temp = document.createElement('div')
     ">
 
     <!-- HEADER -->
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
       
-      <img src="imagenes/logo.png" style="height:45px;" />
+      <img src="imagenes/logo.png" style="height:95px;" />
 
       <div style="text-align:right;">
         <h2 style="margin:0; font-size:16px;">
@@ -373,8 +443,7 @@ const temp = document.createElement('div')
       <thead>
         <tr style="background:#f5f5f5;">
           <th style="padding:6px; border-bottom:1px solid #ddd;">Producto</th>
-          <th style="padding:6px; border-bottom:1px solid #ddd;">Desc</th>
-          <th style="padding:6px; border-bottom:1px solid #ddd;">Cant</th>
+          <th style="padding:6px; border-bottom:1px solid #ddd;">Cantidad</th>
           <th style="padding:6px; border-bottom:1px solid #ddd;">Precio</th>
           <th style="padding:6px; border-bottom:1px solid #ddd;">Total</th>
         </tr>
@@ -384,10 +453,6 @@ const temp = document.createElement('div')
         ${
           detalles.map(d => `
             <tr>
-              <td style="padding:5px; border-bottom:1px solid #eee;">
-                ${d.subcategorias?.nombre || '-'}
-              </td>
-
               <td style="padding:5px; border-bottom:1px solid #eee;">
                 ${d.descripcion || ''}
               </td>
@@ -421,6 +486,8 @@ const temp = document.createElement('div')
       </div>
     </div>
 
+    ${htmlAbonos}
+
     <!-- FOOTER -->
     <div style="margin-top:25px; text-align:center; font-size:10px; color:#888;">
       Gracias por su compra
@@ -431,15 +498,45 @@ const temp = document.createElement('div')
 
   document.body.appendChild(temp)
 
-  await html2pdf()
-    .from(temp.firstElementChild)
-    .set({
-      margin: 0.3,
-      filename: `factura_${factura.numero}.pdf`,
-      html2canvas: { scale: 2 },
-      jsPDF: { unit: 'in', format: 'letter' }
-    })
-    .save()
+// ESPERAR QUE EL DOM PINTE BIEN
+await new Promise(requestAnimationFrame)
+await new Promise(resolve => setTimeout(resolve, 1000))
+
+// ESPERAR IMÁGENES (LOGO)
+const imgs = temp.querySelectorAll('img')
+await Promise.all([...imgs].map(img => {
+  return new Promise(res => {
+    if (img.complete) return res()
+    img.onload = res
+    img.onerror = res
+  })
+}))
+
+// EXTRA PARA MÓVIL (IMPORTANTÍSIMO)
+if (window.innerWidth < 768) {
+  await new Promise(resolve => setTimeout(resolve, 1000))
+}
+
+//  GENERAR PDF
+await html2pdf()
+  .from(temp.firstElementChild)
+  .set({
+    margin: 0.3,
+    filename: `factura_${factura.numero}.pdf`,
+    html2canvas: { 
+      scale: window.innerWidth < 768 ? 1.5 : 2,
+      useCORS: true,
+      scrollY: 0
+    },
+    jsPDF: { 
+      unit: 'in', 
+      format: 'letter' 
+    },
+    pagebreak: { 
+      mode: ['avoid-all', 'css', 'legacy'] 
+    }
+  })
+  .save()
 
   document.body.removeChild(temp)
 }

@@ -239,6 +239,8 @@ function renderFacturas(listaData = facturas) {
           </p>
         </div>
 
+        
+
         <!-- ESTADO (UN POCO MÁS A LA DERECHA) -->
         <div class="flex justify-center items-center md:ml-12">
           ${badge}
@@ -308,6 +310,16 @@ function renderFacturas(listaData = facturas) {
 
           </button>
         ` : ''}
+
+          <!-- NUEVO BOTÓN PDF COMPLETO -->
+          <button onclick="descargarFacturaCompleta('${f.id}')"
+            class="group flex items-center gap-2 px-6 py-2 rounded-full
+                  bg-blue-50 text-blue-700 border border-blue-200
+                  hover:bg-blue-100 hover:shadow-md transition">
+
+            <i data-lucide="download" class="w-4 h-4"></i>
+            <span class="text-sm font-semibold">Factura PDF</span>
+          </button>
 
       </div>
 
@@ -503,7 +515,9 @@ async function generarAbonoPDF({ factura, clienteNombre, ultimoAbono }) {
     
     temp.innerHTML = `
   <div style="
-    width: 650px;
+    width: 100%;
+    max-width: 650px;
+    margin: auto;
     padding: 25px;
     font-family: Arial, sans-serif;
     background: white;
@@ -519,7 +533,7 @@ async function generarAbonoPDF({ factura, clienteNombre, ultimoAbono }) {
   ">
 
     <!-- LOGO -->
-    <img src="imagenes/logo.png" style="height: 50px;" />
+    <img src="imagenes/logo.png" style="height: 95px;" />
 
     <!-- TITULO CENTRADO REAL -->
     <div style="
@@ -591,25 +605,40 @@ async function generarAbonoPDF({ factura, clienteNombre, ultimoAbono }) {
 
   </div>
 `;
-    document.body.appendChild(temp);
 
-    await new Promise(r => setTimeout(r, 200));
+    document.body.appendChild(temp)
 
     const opt = {
-      margin: 0.5,
-      filename: `abono_${numeroAbono}.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: {
-        scale: 2,
-        useCORS: true,
-        scrollY: 0
-      },
-      jsPDF: {
-        unit: 'in',
-        format: 'a4',
-        orientation: 'portrait'
-      }
-    };
+    margin: 0.3,
+    filename: `abono_${numeroAbono}.pdf`,
+    image: { type: 'jpeg', quality: 1 },
+    html2canvas: {
+      scale: 3,
+      useCORS: true,
+      scrollY: 0,
+      windowWidth: 800
+    },
+    jsPDF: {
+      unit: 'in',
+      format: 'letter',
+      orientation: 'portrait'
+    },
+    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+  }
+
+    await new Promise(requestAnimationFrame)
+    await new Promise(resolve => setTimeout(resolve, 400)) // más tiempo para móvil
+
+    const imgs = temp.querySelectorAll('img')
+    await Promise.all(
+      [...imgs].map(img => {
+        if (img.complete) return Promise.resolve()
+        return new Promise(res => {
+          img.onload = res
+          img.onerror = res
+        })
+      })
+    )
 
     await html2pdf().set(opt).from(temp.firstElementChild).save();
 
@@ -713,6 +742,239 @@ window.cerrarModalAbonoDetalle = () => {
 
 cerrarSuccess.onclick = () => {
   modalSuccess.classList.add('hidden')
+}
+
+
+window.descargarFacturaCompleta = async (facturaId) => {
+
+  const factura = facturas.find(f => f.id === facturaId)
+
+  // DETALLES
+  const { data: detalles } = await supabase
+    .from('productos_factura')
+    .select(`
+      *,
+      subcategorias (
+        nombre,
+        categorias ( nombre )
+      )
+    `)
+    .eq('factura_id', facturaId)
+
+  // ABONOS
+  const { data: abonosFactura } = await supabase
+    .from('abonos')
+    .select('*')
+    .eq('factura_id', facturaId)
+
+  const listaAbonos = abonosFactura || []
+
+  // ordenar (IMPORTANTE)
+  listaAbonos.sort((a, b) => new Date(a.fecha) - new Date(b.fecha))
+
+  const totalAbonado = listaAbonos.reduce(
+    (sum, a) => sum + Number(a.monto), 0
+  )
+
+  const restante = Number(factura.total) - totalAbonado
+
+  const totalCalculado = detalles.reduce(
+    (acc, d) => acc + (d.cantidad * d.precio), 0
+  )
+
+  const temp = document.createElement('div')
+
+  //  CLAVE ANTI BUG
+  temp.style.position = 'fixed'
+  temp.style.top = '-10000px'
+  temp.style.left = '-10000px'
+
+  // ===== HISTORIAL =====
+  let htmlAbonos = ''
+
+  if (listaAbonos.length) {
+    htmlAbonos = `
+      <div style="margin-top:20px;">
+        <h3 style="font-size:13px; margin-bottom:8px;">
+          Historial de Abonos
+        </h3>
+
+        <table style="width:100%; border-collapse: collapse; font-size:11px;">
+          <thead>
+            <tr style="background:#f5f5f5;">
+              <th style="padding:6px; border-bottom:1px solid #ddd;">No.</th>
+              <th style="padding:6px; border-bottom:1px solid #ddd;">Fecha</th>
+              <th style="padding:6px; border-bottom:1px solid #ddd;">Monto</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            ${
+              listaAbonos.map((a, index) => `
+                <tr>
+                  <td style="padding:5px; border-bottom:1px solid #eee;">
+                    ${factura.numero}.${index + 1}
+                  </td>
+
+                  <td style="padding:5px; border-bottom:1px solid #eee;">
+                    ${new Date(a.fecha).toLocaleDateString()}
+                  </td>
+
+                  <td style="padding:5px; text-align:right; border-bottom:1px solid #eee;">
+                    C$ ${Number(a.monto).toFixed(2)}
+                  </td>
+                </tr>
+              `).join('')
+            }
+          </tbody>
+        </table>
+
+        <div style="margin-top:10px; font-size:12px;">
+          <p><b>Total abonado:</b> C$ ${totalAbonado.toFixed(2)}</p>
+          <p><b>Restante:</b> C$ ${restante.toFixed(2)}</p>
+        </div>
+      </div>
+    `
+  } else {
+    htmlAbonos = `
+      <div style="margin-top:20px; font-size:12px; color:#666;">
+        <p><b>Sin abonos registrados</b></p>
+      </div>
+    `
+  }
+
+  // ===== HTML =====
+  temp.innerHTML = `
+  <div style="
+    max-width: 680px;
+    margin: auto;
+    padding: 25px;
+    font-family: Arial, sans-serif;
+    background: white;
+    color: #333;
+  ">
+
+    <!-- HEADER -->
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+      
+      <img src="imagenes/logo.png" style="height:95px;" />
+
+      <div style="text-align:right;">
+        <h2 style="margin:0; font-size:16px;">
+          Factura #${factura.numero}
+        </h2>
+
+        <p style="margin:0; font-size:11px;">
+          ${new Date(factura.fecha).toLocaleDateString()}
+        </p>
+      </div>
+    </div>
+
+    <!-- TABLA -->
+    <table style="width:100%; border-collapse: collapse; font-size:11px;">
+      <thead>
+        <tr style="background:#f5f5f5;">
+          <th style="padding:6px; border-bottom:1px solid #ddd;">Producto</th>
+          <th style="padding:6px; border-bottom:1px solid #ddd;">Cantidad</th>
+          <th style="padding:6px; border-bottom:1px solid #ddd;">Precio</th>
+          <th style="padding:6px; border-bottom:1px solid #ddd;">Total</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        ${
+          detalles.map(d => `
+            <tr>
+              <td style="padding:5px; border-bottom:1px solid #eee;">
+                ${d.descripcion || ''}
+              </td>
+
+              <td style="padding:5px; text-align:center; border-bottom:1px solid #eee;">
+                ${d.cantidad}
+              </td>
+
+              <td style="padding:5px; text-align:right; border-bottom:1px solid #eee;">
+                C$ ${Number(d.precio).toFixed(2)}
+              </td>
+
+              <td style="padding:5px; text-align:right; border-bottom:1px solid #eee;">
+                C$ ${(d.cantidad * d.precio).toFixed(2)}
+              </td>
+            </tr>
+          `).join('')
+        }
+      </tbody>
+    </table>
+
+    <!-- TOTAL -->
+    <div style="display:flex; justify-content:flex-end; margin-top:15px;">
+      <div style="
+        border:1px solid #ddd;
+        padding:10px 15px;
+        border-radius:8px;
+        font-size:13px;
+      ">
+        <b>Total: C$ ${totalCalculado.toFixed(2)}</b>
+      </div>
+    </div>
+
+    ${htmlAbonos}
+
+    <!-- FOOTER -->
+    <div style="margin-top:25px; text-align:center; font-size:10px; color:#888;">
+      Gracias por su compra
+    </div>
+
+  </div>
+  `
+
+  document.body.appendChild(temp)
+
+  // =============================
+  // FIX PRO (CLAVE)
+  // =============================
+  await new Promise(requestAnimationFrame)
+  await new Promise(resolve => setTimeout(resolve, 800))
+
+  const imgs = temp.querySelectorAll('img')
+  await Promise.all([...imgs].map(img => {
+    return new Promise(res => {
+      if (img.complete) return res()
+      img.onload = res
+      img.onerror = res
+    })
+  }))
+
+  if (window.innerWidth < 768) {
+    await new Promise(resolve => setTimeout(resolve, 800))
+  }
+
+  // =============================
+  // GENERAR PDF
+  // =============================
+  await html2pdf()
+    .from(temp.firstElementChild)
+    .set({
+      margin: 0.3,
+      filename: `factura_${factura.numero}.pdf`,
+      image: { type: 'jpeg', quality: 1 },
+      html2canvas: {
+        scale: window.innerWidth < 768 ? 1.5 : 2,
+        useCORS: true,
+        scrollY: 0
+      },
+      jsPDF: {
+        unit: 'in',
+        format: 'letter',
+        orientation: 'portrait'
+      },
+      pagebreak: {
+        mode: ['avoid-all', 'css', 'legacy']
+      }
+    })
+    .save()
+
+  document.body.removeChild(temp)
 }
 
 // =============================

@@ -289,6 +289,11 @@ addBtn.onclick = () => {
   lucide.createIcons()
 }
 
+document.addEventListener('click', () => {
+  document.querySelectorAll('.productoList').forEach(list => {
+    list.classList.add('hidden')
+  })
+})
 
 function setupProductoLogic(container) {
 
@@ -305,11 +310,7 @@ function setupProductoLogic(container) {
   list.classList.toggle('hidden')
 }
 
-document.addEventListener('click', () => {
-  list.classList.add('hidden')
-})
-  
-  list.querySelectorAll('.sub-item').forEach(item => {
+    list.querySelectorAll('.sub-item').forEach(item => {
     item.onclick = () => {
       hidden.value = item.dataset.id
       btn.querySelector('span').textContent = item.dataset.name
@@ -438,7 +439,9 @@ async function generarFacturaPDF() {
 
     temp.innerHTML = `
 <div style="
-  width: 680px;
+  width: 100%;
+  max-width: 680px;
+  margin: auto;
   padding: 25px;
   font-family: Arial, sans-serif;
   background: white;
@@ -446,9 +449,9 @@ async function generarFacturaPDF() {
 ">
 
   <!-- HEADER -->
-  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
     
-    <img src="imagenes/logo.png" style="height:45px;" />
+    <img src="imagenes/logo.png" style="height:95px; object-fit: contain;" />
 
     <div style="text-align:right;">
       <h2 style="margin:0; font-size:16px;">
@@ -479,7 +482,6 @@ async function generarFacturaPDF() {
     <thead>
       <tr style="background:#f5f5f5;">
         <th style="padding:6px; border-bottom:1px solid #ddd;">Producto</th>
-        <th style="padding:6px; border-bottom:1px solid #ddd;">Descripcion</th>
         <th style="padding:6px; border-bottom:1px solid #ddd;">Cantidad</th>
         <th style="padding:6px; border-bottom:1px solid #ddd;">Precio</th>
         <th style="padding:6px; border-bottom:1px solid #ddd;">Total</th>
@@ -490,10 +492,6 @@ async function generarFacturaPDF() {
       ${
         detalles.map(d => `
           <tr>
-            <td style="padding:5px; border-bottom:1px solid #eee;">
-              ${d.subcategorias?.nombre || '-'}
-            </td>
-
             <td style="padding:5px; border-bottom:1px solid #eee;">
               ${d.descripcion || ''}
             </td>
@@ -535,19 +533,38 @@ async function generarFacturaPDF() {
 </div>
 `
 
-  document.body.appendChild(temp)
+document.body.appendChild(temp)
 
-  await html2pdf()
-    .from(temp.firstElementChild)
-    .set({
-      margin: 0.3,
-      filename: `factura_${facturaGuardada.id}.pdf`,
-      html2canvas: { scale: 2 },
-      jsPDF: { unit: 'in', format: 'letter' }
-    })
-    .save()
+// esperar render
+await new Promise(resolve => setTimeout(resolve, 500))
 
-  document.body.removeChild(temp)
+//  esperar imagen
+const img = temp.querySelector('img')
+if (img) {
+  await new Promise(resolve => {
+    if (img.complete) return resolve()
+    img.onload = resolve
+    img.onerror = resolve
+  })
+}
+
+await html2pdf()
+  .from(temp.firstElementChild)
+  .set({
+    margin: 0.3,
+    filename: `factura_${facturaGuardada.id}.pdf`,
+    html2canvas: {
+      scale: 1.5,
+      useCORS: true,
+      scrollY: 0
+    },
+    jsPDF: { unit: 'in', format: 'letter' },
+    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+  })
+  .save()
+
+document.body.removeChild(temp)
+
 }
 
 // MODAL
@@ -563,10 +580,6 @@ cerrarModalSuccess.onclick = () => {
 
   window.location.href = "index.html"
 }
-
-window.addEventListener('resize', () => {
-  location.reload()
-})
 
 // INIT
 async function init() {
