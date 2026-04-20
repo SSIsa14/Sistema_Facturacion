@@ -18,6 +18,9 @@ const productosTable = document.getElementById('productosTable')
 const addBtn = document.getElementById('addProducto')
 const totalSpan = document.getElementById('total')
 const guardarBtn = document.getElementById('guardarFactura')
+const saldoAnteriorInput = document.getElementById('saldoAnterior')
+const subtotalProductosSpan = document.getElementById('subtotalProductos')
+const saldoAnteriorDisplay = document.getElementById('saldoAnteriorDisplay')
 
 const modalSuccess = document.getElementById('modalSuccess')
 const descargarDesdeModal = document.getElementById('descargarDesdeModal')
@@ -473,14 +476,21 @@ if (buscar) {
 // TOTAL
 // =============================
 function calcularTotal() {
-  total = 0
+  let subtotalProductos = 0
 
   document.querySelectorAll('.subtotal').forEach(el => {
-    total += Number(el.textContent)
+    subtotalProductos += Number(el.textContent)
   })
 
+  const saldoAnterior = Number(saldoAnteriorInput.value) || 0
+  total = subtotalProductos + saldoAnterior
+
+  subtotalProductosSpan.textContent = subtotalProductos.toFixed(2)
+  saldoAnteriorDisplay.textContent = saldoAnterior.toFixed(2)
   totalSpan.textContent = total.toFixed(2)
 }
+
+saldoAnteriorInput.addEventListener('input', calcularTotal)
 
 // =============================
 // GUARDAR
@@ -492,6 +502,8 @@ guardarBtn.onclick = async () => {
   const tipo = tipoInput.value
   const estado = tipo === 'contado' ? 'pagado' : 'pendiente'
 
+  const saldoAnterior = Number(saldoAnteriorInput.value) || 0
+
   const { data: factura } = await supabase
     .from('facturas')
     .insert([{
@@ -499,7 +511,8 @@ guardarBtn.onclick = async () => {
       tipo,
       estado,
       fecha: new Date(),
-      total
+      total,
+      saldo_anterior: saldoAnterior
     }])
     .select()
     .single()
@@ -575,21 +588,22 @@ async function generarFacturaPDF() {
     temp.innerHTML = `
 <div style="
   width: 100%;
-  max-width: 680px;
+  max-width: 370px;
   margin: auto;
-  padding: 25px;
+  padding: 10px;
   font-family: Arial, sans-serif;
   background: white;
   color: #333;
+  font-size: 12px;
 ">
 
   <!-- HEADER -->
-  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-    
-    <img src="imagenes/logo.png" style="height:95px; object-fit: contain;" />
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+
+    <img src="imagenes/logo.png" style="height:55px; object-fit: contain;" />
 
     <div style="text-align:right;">
-      <h2 style="margin:0; font-size:16px;">
+      <h2 style="margin:0; font-size:14px;">
         Factura #${facturaGuardada.numero || facturaGuardada.id}
       </h2>
 
@@ -604,22 +618,22 @@ async function generarFacturaPDF() {
   </div>
 
   <!-- CLIENTE -->
-  <div style="margin-bottom:10px; font-size:12px; line-height:1.4;">
-    <p><b>Cliente:</b> ${cliente.nombre}</p>
-    <p><b>Dirección:</b> ${cliente.direccion || '-'}</p>
-    <p><b>Tel:</b> ${cliente.telefono || '-'}</p>
+  <div style="margin-bottom:6px; font-size:12px; line-height:1.3;">
+    <p style="margin:2px 0;"><b>Cliente:</b> ${cliente.nombre}</p>
+    <p style="margin:2px 0;"><b>Dirección:</b> ${cliente.direccion || '-'}</p>
+    <p style="margin:2px 0;"><b>Tel:</b> ${cliente.telefono || '-'}</p>
   </div>
 
-  <hr style="margin:10px 0;">
+  <hr style="margin:6px 0;">
 
   <!-- TABLA -->
-  <table style="width:100%; border-collapse: collapse; font-size:11px;">
+  <table style="width:100%; border-collapse: collapse; font-size:12px;">
     <thead>
       <tr style="background:#f5f5f5;">
-        <th style="padding:6px; border-bottom:1px solid #ddd;">Producto</th>
-        <th style="padding:6px; border-bottom:1px solid #ddd;">Cantidad</th>
-        <th style="padding:6px; border-bottom:1px solid #ddd;">Precio</th>
-        <th style="padding:6px; border-bottom:1px solid #ddd;">Total</th>
+        <th style="padding:4px; border-bottom:1px solid #ddd;">Producto</th>
+        <th style="padding:4px; border-bottom:1px solid #ddd;">Cant.</th>
+        <th style="padding:4px; border-bottom:1px solid #ddd;">Precio</th>
+        <th style="padding:4px; border-bottom:1px solid #ddd;">Total</th>
       </tr>
     </thead>
 
@@ -627,19 +641,19 @@ async function generarFacturaPDF() {
       ${
         detalles.map(d => `
           <tr>
-            <td style="padding:5px; border-bottom:1px solid #eee;">
+            <td style="padding:4px; border-bottom:1px solid #eee;">
               ${d.descripcion || ''}
             </td>
 
-            <td style="padding:5px; text-align:center; border-bottom:1px solid #eee;">
+            <td style="padding:4px; text-align:center; border-bottom:1px solid #eee;">
               ${d.cantidad}
             </td>
 
-            <td style="padding:5px; text-align:right; border-bottom:1px solid #eee;">
+            <td style="padding:4px; text-align:right; border-bottom:1px solid #eee;">
               C$ ${Number(d.precio).toFixed(2)}
             </td>
 
-            <td style="padding:5px; text-align:right; border-bottom:1px solid #eee;">
+            <td style="padding:4px; text-align:right; border-bottom:1px solid #eee;">
               C$ ${(d.cantidad * d.precio).toFixed(2)}
             </td>
           </tr>
@@ -649,20 +663,34 @@ async function generarFacturaPDF() {
   </table>
 
   <!-- TOTAL BOX -->
-  <div style="display:flex; justify-content:flex-end; margin-top:15px;">
+  <div style="display:flex; justify-content:flex-end; margin-top:8px;">
     <div style="
       border:1px solid #ddd;
-      padding:10px 15px;
-      border-radius:8px;
-      font-size:13px;
+      padding:6px 10px;
+      border-radius:6px;
+      font-size:12px;
+      min-width: 160px;
     ">
-      <b>Total: C$ ${Number(facturaGuardada.total).toFixed(2)}</b>
+      ${Number(facturaGuardada.saldo_anterior) > 0 ? `
+        <div style="display:flex; justify-content:space-between; margin-bottom:3px;">
+          <span>Subtotal:</span>
+          <span>C$ ${(Number(facturaGuardada.total) - Number(facturaGuardada.saldo_anterior)).toFixed(2)}</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:3px;">
+          <span>Saldo anterior:</span>
+          <span>C$ ${Number(facturaGuardada.saldo_anterior).toFixed(2)}</span>
+        </div>
+      ` : ''}
+      <div style="display:flex; justify-content:space-between; font-size:13px; border-top:1px solid #ddd; padding-top:3px;">
+        <b>Total:</b>
+        <b>C$ ${Number(facturaGuardada.total).toFixed(2)}</b>
+      </div>
     </div>
   </div>
 
   <!-- FOOTER -->
-  <div style="margin-top:25px; text-align:center; font-size:10px; color:#888;">
-    Gracias por su compra
+  <div style="margin-top:12px; text-align:center; font-size:10px; color:#888;">
+    Gracias por su preferencia, será un gusto atenderle nuevamente
   </div>
 
 </div>
@@ -686,15 +714,15 @@ if (img) {
 await html2pdf()
   .from(temp.firstElementChild)
   .set({
-    margin: 0.3,
+    margin: 0.2,
     filename: `factura_${facturaGuardada.id}.pdf`,
     html2canvas: {
-      scale: 1.5,
+      scale: 2,
       useCORS: true,
       scrollY: 0
     },
-    jsPDF: { unit: 'in', format: 'letter' },
-    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+    jsPDF: { unit: 'in', format: [4.25, 5.5], orientation: 'portrait' },
+    pagebreak: { mode: ['css', 'legacy'], avoid: 'tr' }
   })
   .save()
 

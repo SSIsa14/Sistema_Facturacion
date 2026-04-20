@@ -350,17 +350,17 @@ window.descargarPDFHistorial = async (id) => {
 
 if (listaAbonos.length) {
   htmlAbonos = `
-    <div style="margin-top:20px;">
-      <h3 style="font-size:13px; margin-bottom:8px;">
+    <div style="margin-top:10px;">
+      <h3 style="font-size:13px; margin-bottom:4px;">
         Historial de Abonos
       </h3>
 
-      <table style="width:100%; border-collapse: collapse; font-size:11px;">
+      <table style="width:100%; border-collapse: collapse; font-size:12px;">
         <thead>
           <tr style="background:#f5f5f5;">
-            <th style="padding:6px; border-bottom:1px solid #ddd;">No.</th>
-            <th style="padding:6px; border-bottom:1px solid #ddd;">Fecha</th>
-            <th style="padding:6px; border-bottom:1px solid #ddd;">Monto</th>
+            <th style="padding:4px; border-bottom:1px solid #ddd;">No.</th>
+            <th style="padding:4px; border-bottom:1px solid #ddd;">Fecha</th>
+            <th style="padding:4px; border-bottom:1px solid #ddd;">Monto</th>
           </tr>
         </thead>
 
@@ -368,15 +368,15 @@ if (listaAbonos.length) {
           ${
             listaAbonos.map((a, index) => `
               <tr>
-                <td style="padding:5px; border-bottom:1px solid #eee;">
+                <td style="padding:4px; border-bottom:1px solid #eee;">
                   ${factura.numero}.${index + 1}
                 </td>
 
-                <td style="padding:5px; border-bottom:1px solid #eee;">
+                <td style="padding:4px; border-bottom:1px solid #eee;">
                   ${new Date(a.fecha).toLocaleDateString()}
                 </td>
 
-                <td style="padding:5px; text-align:right; border-bottom:1px solid #eee;">
+                <td style="padding:4px; text-align:right; border-bottom:1px solid #eee;">
                   C$ ${Number(a.monto).toFixed(2)}
                 </td>
               </tr>
@@ -385,15 +385,15 @@ if (listaAbonos.length) {
         </tbody>
       </table>
 
-      <div style="margin-top:10px; font-size:12px;">
-        <p><b>Total abonado:</b> C$ ${totalAbonado.toFixed(2)}</p>
-        <p><b>Restante:</b> C$ ${restante.toFixed(2)}</p>
+      <div style="margin-top:6px; font-size:12px;">
+        <p style="margin:2px 0;"><b>Total abonado:</b> C$ ${totalAbonado.toFixed(2)}</p>
+        <p style="margin:2px 0;"><b>Restante:</b> C$ ${restante.toFixed(2)}</p>
       </div>
     </div>
   `
 }else{
   htmlAbonos = `
-    <div style="margin-top:20px; font-size:12px; color:#666;">
+    <div style="margin-top:10px; font-size:12px; color:#666;">
       <p><b>Sin abonos registrados</b></p>
     </div>
   `
@@ -401,21 +401,22 @@ if (listaAbonos.length) {
 
     temp.innerHTML = `
     <div style="
-      max-width: 680px;
+      max-width: 370px;
       margin: auto;
-      padding: 25px;
+      padding: 10px;
       font-family: Arial, sans-serif;
       background: white;
       color: #333;
+      font-size: 12px;
     ">
 
     <!-- HEADER -->
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-      
-      <img src="imagenes/logo.png" style="height:95px;" />
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+
+      <img src="imagenes/logo.png" style="height:55px;" />
 
       <div style="text-align:right;">
-        <h2 style="margin:0; font-size:16px;">
+        <h2 style="margin:0; font-size:14px;">
           Factura #${factura.numero || factura.id}
         </h2>
 
@@ -430,22 +431,22 @@ if (listaAbonos.length) {
     </div>
 
     <!-- CLIENTE -->
-    <div style="margin-bottom:10px; font-size:12px; line-height:1.4;">
-      <p><b>Cliente:</b> ${factura.clientes?.nombre || ''}</p>
-      <p><b>Dirección:</b> ${factura.clientes?.direccion || '-'}</p>
-      <p><b>Tel:</b> ${factura.clientes?.telefono || '-'}</p>
+    <div style="margin-bottom:6px; font-size:12px; line-height:1.3;">
+      <p style="margin:2px 0;"><b>Cliente:</b> ${factura.clientes?.nombre || ''}</p>
+      <p style="margin:2px 0;"><b>Dirección:</b> ${factura.clientes?.direccion || '-'}</p>
+      <p style="margin:2px 0;"><b>Tel:</b> ${factura.clientes?.telefono || '-'}</p>
     </div>
 
-    <hr style="margin:10px 0;">
+    <hr style="margin:6px 0;">
 
     <!-- TABLA -->
-    <table style="width:100%; border-collapse: collapse; font-size:11px;">
+    <table style="width:100%; border-collapse: collapse; font-size:12px;">
       <thead>
         <tr style="background:#f5f5f5;">
-          <th style="padding:6px; border-bottom:1px solid #ddd;">Producto</th>
-          <th style="padding:6px; border-bottom:1px solid #ddd;">Cantidad</th>
-          <th style="padding:6px; border-bottom:1px solid #ddd;">Precio</th>
-          <th style="padding:6px; border-bottom:1px solid #ddd;">Total</th>
+          <th style="padding:4px; border-bottom:1px solid #ddd;">Producto</th>
+          <th style="padding:4px; border-bottom:1px solid #ddd;">Cant.</th>
+          <th style="padding:4px; border-bottom:1px solid #ddd;">Precio</th>
+          <th style="padding:4px; border-bottom:1px solid #ddd;">Total</th>
         </tr>
       </thead>
 
@@ -453,19 +454,19 @@ if (listaAbonos.length) {
         ${
           detalles.map(d => `
             <tr>
-              <td style="padding:5px; border-bottom:1px solid #eee;">
+              <td style="padding:4px; border-bottom:1px solid #eee;">
                 ${d.descripcion || ''}
               </td>
 
-              <td style="padding:5px; text-align:center; border-bottom:1px solid #eee;">
+              <td style="padding:4px; text-align:center; border-bottom:1px solid #eee;">
                 ${d.cantidad}
               </td>
 
-              <td style="padding:5px; text-align:right; border-bottom:1px solid #eee;">
+              <td style="padding:4px; text-align:right; border-bottom:1px solid #eee;">
                 C$ ${Number(d.precio).toFixed(2)}
               </td>
 
-              <td style="padding:5px; text-align:right; border-bottom:1px solid #eee;">
+              <td style="padding:4px; text-align:right; border-bottom:1px solid #eee;">
                 C$ ${(d.cantidad * d.precio).toFixed(2)}
               </td>
             </tr>
@@ -475,22 +476,36 @@ if (listaAbonos.length) {
     </table>
 
     <!-- TOTAL -->
-    <div style="display:flex; justify-content:flex-end; margin-top:15px;">
+    <div style="display:flex; justify-content:flex-end; margin-top:8px;">
       <div style="
         border:1px solid #ddd;
-        padding:10px 15px;
-        border-radius:8px;
-        font-size:13px;
+        padding:6px 10px;
+        border-radius:6px;
+        font-size:12px;
+        min-width: 160px;
       ">
-        <b>Total: C$ ${totalCalculado.toFixed(2)}</b>
+        ${Number(factura.saldo_anterior) > 0 ? `
+          <div style="display:flex; justify-content:space-between; margin-bottom:3px;">
+            <span>Subtotal:</span>
+            <span>C$ ${totalCalculado.toFixed(2)}</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; margin-bottom:3px;">
+            <span>Saldo anterior:</span>
+            <span>C$ ${Number(factura.saldo_anterior).toFixed(2)}</span>
+          </div>
+        ` : ''}
+        <div style="display:flex; justify-content:space-between; font-size:13px; border-top:1px solid #ddd; padding-top:3px;">
+          <b>Total:</b>
+          <b>C$ ${Number(factura.total).toFixed(2)}</b>
+        </div>
       </div>
     </div>
 
     ${htmlAbonos}
 
     <!-- FOOTER -->
-    <div style="margin-top:25px; text-align:center; font-size:10px; color:#888;">
-      Gracias por su compra
+    <div style="margin-top:12px; text-align:center; font-size:10px; color:#888;">
+      Gracias por su preferencia, será un gusto atenderle nuevamente
     </div>
 
   </div>
@@ -521,19 +536,21 @@ if (window.innerWidth < 768) {
 await html2pdf()
   .from(temp.firstElementChild)
   .set({
-    margin: 0.3,
+    margin: 0.2,
     filename: `factura_${factura.numero}.pdf`,
-    html2canvas: { 
-      scale: window.innerWidth < 768 ? 1.5 : 2,
+    html2canvas: {
+      scale: window.innerWidth < 768 ? 2 : 2.5,
       useCORS: true,
       scrollY: 0
     },
-    jsPDF: { 
-      unit: 'in', 
-      format: 'letter' 
+    jsPDF: {
+      unit: 'in',
+      format: [4.25, 5.5],
+      orientation: 'portrait'
     },
-    pagebreak: { 
-      mode: ['avoid-all', 'css', 'legacy'] 
+    pagebreak: {
+      mode: ['css', 'legacy'],
+      avoid: 'tr'
     }
   })
   .save()

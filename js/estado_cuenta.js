@@ -517,12 +517,13 @@ async function generarAbonoPDF({ factura, clienteNombre, ultimoAbono }) {
     temp.innerHTML = `
   <div style="
     width: 100%;
-    max-width: 650px;
+    max-width: 370px;
     margin: auto;
-    padding: 25px;
+    padding: 10px;
     font-family: Arial, sans-serif;
     background: white;
     color: #333;
+    font-size: 12px;
   ">
 
   <!-- HEADER -->
@@ -530,11 +531,11 @@ async function generarAbonoPDF({ factura, clienteNombre, ultimoAbono }) {
     position: relative;
     display: flex;
     align-items: center;
-    margin-bottom: 20px;
+    margin-bottom: 10px;
   ">
 
     <!-- LOGO -->
-    <img src="imagenes/logo.png" style="height: 95px;" />
+    <img src="imagenes/logo.png" style="height: 55px;" />
 
     <!-- TITULO CENTRADO REAL -->
     <div style="
@@ -543,10 +544,10 @@ async function generarAbonoPDF({ factura, clienteNombre, ultimoAbono }) {
       transform: translateX(-50%);
       text-align: center;
     ">
-      <h2 style="margin: 0; font-size: 18px;">
+      <h2 style="margin: 0; font-size: 14px;">
         Comprobante de Abono
       </h2>
-      <p style="margin: 0; font-size: 12px; color: #666;">
+      <p style="margin: 0; font-size: 11px; color: #666;">
         No. ${numeroAbono}
       </p>
     </div>
@@ -554,40 +555,40 @@ async function generarAbonoPDF({ factura, clienteNombre, ultimoAbono }) {
   </div>
 
     <!-- INFO -->
-    <div style="margin-bottom: 15px; font-size: 12px;">
-      <p><b>Fecha:</b> ${new Date(ultimoAbono.fecha).toLocaleDateString()}</p>
-      <p><b>Cliente:</b> ${clienteNombre}</p>
-      <p><b>Factura:</b> #${factura.numero}</p>
+    <div style="margin-bottom: 8px; font-size: 12px; line-height:1.3;">
+      <p style="margin:2px 0;"><b>Fecha:</b> ${new Date(ultimoAbono.fecha).toLocaleDateString()}</p>
+      <p style="margin:2px 0;"><b>Cliente:</b> ${clienteNombre}</p>
+      <p style="margin:2px 0;"><b>Factura:</b> #${factura.numero}</p>
     </div>
 
-    <hr style="margin: 15px 0;">
+    <hr style="margin: 8px 0;">
 
     <!-- RESUMEN -->
     <div style="
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
+      gap: 6px;
       text-align: center;
-      margin-top: 10px;
+      margin-top: 6px;
     ">
 
-      <div style="border: 1px solid #eee; padding: 10px; border-radius: 8px;">
-        <p style="font-size: 11px; color: #777;">Total Factura</p>
-        <p style="font-size: 14px; font-weight: bold;">
+      <div style="border: 1px solid #eee; padding: 6px; border-radius: 6px;">
+        <p style="font-size: 10px; color: #777; margin:0;">Total</p>
+        <p style="font-size: 12px; font-weight: bold; margin:2px 0 0;">
           C$ ${Number(factura.total).toFixed(2)}
         </p>
       </div>
 
-      <div style="border: 1px solid #eee; padding: 10px; border-radius: 8px;">
-        <p style="font-size: 11px; color: #777;">Abono</p>
-        <p style="font-size: 14px; font-weight: bold; color: green;">
+      <div style="border: 1px solid #eee; padding: 6px; border-radius: 6px;">
+        <p style="font-size: 10px; color: #777; margin:0;">Abono</p>
+        <p style="font-size: 12px; font-weight: bold; color: green; margin:2px 0 0;">
           C$ ${Number(ultimoAbono.monto).toFixed(2)}
         </p>
       </div>
 
-      <div style="border: 1px solid #eee; padding: 10px; border-radius: 8px;">
-        <p style="font-size: 11px; color: #777;">Restante</p>
-        <p style="font-size: 14px; font-weight: bold; color: red;">
+      <div style="border: 1px solid #eee; padding: 6px; border-radius: 6px;">
+        <p style="font-size: 10px; color: #777; margin:0;">Restante</p>
+        <p style="font-size: 12px; font-weight: bold; color: red; margin:2px 0 0;">
           C$ ${restante.toFixed(2)}
         </p>
       </div>
@@ -595,13 +596,13 @@ async function generarAbonoPDF({ factura, clienteNombre, ultimoAbono }) {
     </div>
 
     <!-- TOTAL ABONADO -->
-    <div style="margin-top: 20px; font-size: 12px;">
-      <p><b>Total abonado:</b> C$ ${totalAbonado.toFixed(2)}</p>
+    <div style="margin-top: 10px; font-size: 12px;">
+      <p style="margin:2px 0;"><b>Total abonado:</b> C$ ${totalAbonado.toFixed(2)}</p>
     </div>
 
     <!-- FOOTER -->
-    <div style="margin-top: 30px; text-align: center; font-size: 10px; color: #999;">
-      <p>Gracias por su preferencia</p>
+    <div style="margin-top: 14px; text-align: center; font-size: 10px; color: #999;">
+      <p>Gracias por su preferencia, será un gusto atenderle nuevamente</p>
     </div>
 
   </div>
@@ -610,21 +611,21 @@ async function generarAbonoPDF({ factura, clienteNombre, ultimoAbono }) {
     document.body.appendChild(temp)
 
     const opt = {
-    margin: 0.3,
+    margin: 0.2,
     filename: `abono_${numeroAbono}.pdf`,
     image: { type: 'jpeg', quality: 1 },
     html2canvas: {
       scale: 3,
       useCORS: true,
       scrollY: 0,
-      windowWidth: 800
+      windowWidth: 400
     },
     jsPDF: {
       unit: 'in',
-      format: 'letter',
+      format: [4.25, 5.5],
       orientation: 'portrait'
     },
-    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+    pagebreak: { mode: ['css', 'legacy'], avoid: 'tr' }
   }
 
     await new Promise(requestAnimationFrame)
@@ -795,17 +796,17 @@ window.descargarFacturaCompleta = async (facturaId) => {
 
   if (listaAbonos.length) {
     htmlAbonos = `
-      <div style="margin-top:20px;">
-        <h3 style="font-size:13px; margin-bottom:8px;">
+      <div style="margin-top:10px;">
+        <h3 style="font-size:13px; margin-bottom:4px;">
           Historial de Abonos
         </h3>
 
-        <table style="width:100%; border-collapse: collapse; font-size:11px;">
+        <table style="width:100%; border-collapse: collapse; font-size:12px;">
           <thead>
             <tr style="background:#f5f5f5;">
-              <th style="padding:6px; border-bottom:1px solid #ddd;">No.</th>
-              <th style="padding:6px; border-bottom:1px solid #ddd;">Fecha</th>
-              <th style="padding:6px; border-bottom:1px solid #ddd;">Monto</th>
+              <th style="padding:4px; border-bottom:1px solid #ddd;">No.</th>
+              <th style="padding:4px; border-bottom:1px solid #ddd;">Fecha</th>
+              <th style="padding:4px; border-bottom:1px solid #ddd;">Monto</th>
             </tr>
           </thead>
 
@@ -813,15 +814,15 @@ window.descargarFacturaCompleta = async (facturaId) => {
             ${
               listaAbonos.map((a, index) => `
                 <tr>
-                  <td style="padding:5px; border-bottom:1px solid #eee;">
+                  <td style="padding:4px; border-bottom:1px solid #eee;">
                     ${factura.numero}.${index + 1}
                   </td>
 
-                  <td style="padding:5px; border-bottom:1px solid #eee;">
+                  <td style="padding:4px; border-bottom:1px solid #eee;">
                     ${new Date(a.fecha).toLocaleDateString()}
                   </td>
 
-                  <td style="padding:5px; text-align:right; border-bottom:1px solid #eee;">
+                  <td style="padding:4px; text-align:right; border-bottom:1px solid #eee;">
                     C$ ${Number(a.monto).toFixed(2)}
                   </td>
                 </tr>
@@ -830,15 +831,15 @@ window.descargarFacturaCompleta = async (facturaId) => {
           </tbody>
         </table>
 
-        <div style="margin-top:10px; font-size:12px;">
-          <p><b>Total abonado:</b> C$ ${totalAbonado.toFixed(2)}</p>
-          <p><b>Restante:</b> C$ ${restante.toFixed(2)}</p>
+        <div style="margin-top:6px; font-size:12px;">
+          <p style="margin:2px 0;"><b>Total abonado:</b> C$ ${totalAbonado.toFixed(2)}</p>
+          <p style="margin:2px 0;"><b>Restante:</b> C$ ${restante.toFixed(2)}</p>
         </div>
       </div>
     `
   } else {
     htmlAbonos = `
-      <div style="margin-top:20px; font-size:12px; color:#666;">
+      <div style="margin-top:10px; font-size:12px; color:#666;">
         <p><b>Sin abonos registrados</b></p>
       </div>
     `
@@ -847,21 +848,22 @@ window.descargarFacturaCompleta = async (facturaId) => {
   // ===== HTML =====
   temp.innerHTML = `
   <div style="
-    max-width: 680px;
+    max-width: 370px;
     margin: auto;
-    padding: 25px;
+    padding: 10px;
     font-family: Arial, sans-serif;
     background: white;
     color: #333;
+    font-size: 12px;
   ">
 
     <!-- HEADER -->
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-      
-      <img src="imagenes/logo.png" style="height:95px;" />
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+
+      <img src="imagenes/logo.png" style="height:55px;" />
 
       <div style="text-align:right;">
-        <h2 style="margin:0; font-size:16px;">
+        <h2 style="margin:0; font-size:14px;">
           Factura #${factura.numero}
         </h2>
 
@@ -872,13 +874,13 @@ window.descargarFacturaCompleta = async (facturaId) => {
     </div>
 
     <!-- TABLA -->
-    <table style="width:100%; border-collapse: collapse; font-size:11px;">
+    <table style="width:100%; border-collapse: collapse; font-size:12px;">
       <thead>
         <tr style="background:#f5f5f5;">
-          <th style="padding:6px; border-bottom:1px solid #ddd;">Producto</th>
-          <th style="padding:6px; border-bottom:1px solid #ddd;">Cantidad</th>
-          <th style="padding:6px; border-bottom:1px solid #ddd;">Precio</th>
-          <th style="padding:6px; border-bottom:1px solid #ddd;">Total</th>
+          <th style="padding:4px; border-bottom:1px solid #ddd;">Producto</th>
+          <th style="padding:4px; border-bottom:1px solid #ddd;">Cant.</th>
+          <th style="padding:4px; border-bottom:1px solid #ddd;">Precio</th>
+          <th style="padding:4px; border-bottom:1px solid #ddd;">Total</th>
         </tr>
       </thead>
 
@@ -886,19 +888,19 @@ window.descargarFacturaCompleta = async (facturaId) => {
         ${
           detalles.map(d => `
             <tr>
-              <td style="padding:5px; border-bottom:1px solid #eee;">
+              <td style="padding:4px; border-bottom:1px solid #eee;">
                 ${d.descripcion || ''}
               </td>
 
-              <td style="padding:5px; text-align:center; border-bottom:1px solid #eee;">
+              <td style="padding:4px; text-align:center; border-bottom:1px solid #eee;">
                 ${d.cantidad}
               </td>
 
-              <td style="padding:5px; text-align:right; border-bottom:1px solid #eee;">
+              <td style="padding:4px; text-align:right; border-bottom:1px solid #eee;">
                 C$ ${Number(d.precio).toFixed(2)}
               </td>
 
-              <td style="padding:5px; text-align:right; border-bottom:1px solid #eee;">
+              <td style="padding:4px; text-align:right; border-bottom:1px solid #eee;">
                 C$ ${(d.cantidad * d.precio).toFixed(2)}
               </td>
             </tr>
@@ -908,22 +910,36 @@ window.descargarFacturaCompleta = async (facturaId) => {
     </table>
 
     <!-- TOTAL -->
-    <div style="display:flex; justify-content:flex-end; margin-top:15px;">
+    <div style="display:flex; justify-content:flex-end; margin-top:8px;">
       <div style="
         border:1px solid #ddd;
-        padding:10px 15px;
-        border-radius:8px;
-        font-size:13px;
+        padding:6px 10px;
+        border-radius:6px;
+        font-size:12px;
+        min-width: 160px;
       ">
-        <b>Total: C$ ${totalCalculado.toFixed(2)}</b>
+        ${Number(factura.saldo_anterior) > 0 ? `
+          <div style="display:flex; justify-content:space-between; margin-bottom:3px;">
+            <span>Subtotal:</span>
+            <span>C$ ${totalCalculado.toFixed(2)}</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; margin-bottom:3px;">
+            <span>Saldo anterior:</span>
+            <span>C$ ${Number(factura.saldo_anterior).toFixed(2)}</span>
+          </div>
+        ` : ''}
+        <div style="display:flex; justify-content:space-between; font-size:13px; border-top:1px solid #ddd; padding-top:3px;">
+          <b>Total:</b>
+          <b>C$ ${Number(factura.total).toFixed(2)}</b>
+        </div>
       </div>
     </div>
 
     ${htmlAbonos}
 
     <!-- FOOTER -->
-    <div style="margin-top:25px; text-align:center; font-size:10px; color:#888;">
-      Gracias por su compra
+    <div style="margin-top:12px; text-align:center; font-size:10px; color:#888;">
+      Gracias por su preferencia, será un gusto atenderle nuevamente
     </div>
 
   </div>
@@ -956,21 +972,22 @@ window.descargarFacturaCompleta = async (facturaId) => {
   await html2pdf()
     .from(temp.firstElementChild)
     .set({
-      margin: 0.3,
+      margin: 0.2,
       filename: `factura_${factura.numero}.pdf`,
       image: { type: 'jpeg', quality: 1 },
       html2canvas: {
-        scale: window.innerWidth < 768 ? 1.5 : 2,
+        scale: window.innerWidth < 768 ? 2 : 2.5,
         useCORS: true,
         scrollY: 0
       },
       jsPDF: {
         unit: 'in',
-        format: 'letter',
+        format: [4.25, 5.5],
         orientation: 'portrait'
       },
       pagebreak: {
-        mode: ['avoid-all', 'css', 'legacy']
+        mode: ['css', 'legacy'],
+        avoid: 'tr'
       }
     })
     .save()
