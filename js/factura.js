@@ -14,6 +14,8 @@ const tipoList = document.getElementById('tipoList')
 const tipoText = document.getElementById('tipoText')
 const tipoInput = document.getElementById('tipo')
 
+const fechaFactura = document.getElementById('fechaFactura')
+
 const productosTable = document.getElementById('productosTable')
 const addBtn = document.getElementById('addProducto')
 const totalSpan = document.getElementById('total')
@@ -40,6 +42,7 @@ let subcategorias = []
 let descripciones = []
 let total = 0
 let facturaGuardada = null
+let calendario
 
 // =============================
 // DROPDOWNS GENERALES (CLIENTE + TIPO)
@@ -80,15 +83,26 @@ document.addEventListener('click', (e) => {
 async function cargarClientes() {
   const { data } = await supabase.from('clientes').select('*')
 
-  clienteList.innerHTML = ''
+  clienteList.innerHTML = `
+    <div class="p-2 border-b sticky top-0 bg-white z-10">
+      <input type="text"
+        class="buscarCliente w-full p-2 border rounded text-sm"
+        placeholder="Buscar cliente...">
+    </div>
+    <div class="listaClientes"></div>
+  `
+
+  const listaClientes = clienteList.querySelector('.listaClientes')
+  const buscarCliente = clienteList.querySelector('.buscarCliente')
 
   // ==============================
   // CLIENTES
   // ==============================
   data.forEach(c => {
     const div = document.createElement('div')
-    div.className = "p-3 hover:bg-gray-100 cursor-pointer"
+    div.className = "cliente-item p-3 hover:bg-gray-100 cursor-pointer"
     div.textContent = c.nombre
+    div.dataset.nombre = (c.nombre || '').toLowerCase()
 
     div.onclick = () => {
       clienteSelect.value = c.id
@@ -97,7 +111,7 @@ async function cargarClientes() {
       clienteList.classList.add('hidden')
     }
 
-    clienteList.appendChild(div)
+    listaClientes.appendChild(div)
   })
 
   // ==============================
@@ -105,7 +119,7 @@ async function cargarClientes() {
   // ==============================
   const sep = document.createElement('div')
   sep.className = "border-t my-1"
-  clienteList.appendChild(sep)
+  listaClientes.appendChild(sep)
 
   // ==============================
   // NUEVO CLIENTE
@@ -123,7 +137,21 @@ async function cargarClientes() {
     })
   }
 
-  clienteList.appendChild(nuevo)
+  listaClientes.appendChild(nuevo)
+
+  // ==============================
+  // BUSCADOR
+  // ==============================
+  buscarCliente.addEventListener('click', (e) => e.stopPropagation())
+
+  buscarCliente.addEventListener('input', () => {
+    const val = buscarCliente.value.toLowerCase()
+
+    listaClientes.querySelectorAll('.cliente-item').forEach(item => {
+      const coincide = item.dataset.nombre.includes(val)
+      item.style.display = coincide ? 'block' : 'none'
+    })
+  })
 
   lucide.createIcons()
 }
@@ -504,13 +532,16 @@ guardarBtn.onclick = async () => {
 
   const saldoAnterior = Number(saldoAnteriorInput.value) || 0
 
+
+  const fechaSeleccionada = calendario.selectedDates[0] || new Date()
+
   const { data: factura } = await supabase
     .from('facturas')
     .insert([{
       cliente_id: clienteSelect.value,
       tipo,
       estado,
-      fecha: new Date(),
+      fecha: fechaSeleccionada,
       total,
       saldo_anterior: saldoAnterior
     }])
@@ -737,7 +768,6 @@ descargarDesdeModal.onclick = async () => {
 
   window.location.href = "index.html"
 }
-
 cerrarModalSuccess.onclick = () => {
   modalSuccess.classList.add('hidden')
 
@@ -747,6 +777,13 @@ cerrarModalSuccess.onclick = () => {
 // INIT
 async function init() {
   setupDropdown(tipoBtn, tipoList, tipoText, tipoInput)
+
+  // FECHA 
+  calendario = flatpickr("#fechaFactura", {
+  dateFormat: "Y-m-d",
+  defaultDate: "today",
+  allowInput: true
+})
 
   await cargarModalCliente()
   await cargarClientes()

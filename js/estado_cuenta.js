@@ -870,6 +870,10 @@ window.descargarFacturaCompleta = async (facturaId) => {
         <p style="margin:0; font-size:11px;">
           ${new Date(factura.fecha).toLocaleDateString()}
         </p>
+
+        <p style="margin:0; font-size:11px;">
+          ${factura.tipo.toUpperCase()}
+        </p>
       </div>
     </div>
 

@@ -22,6 +22,8 @@
 
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 </head>
 
 <body class="bg-gray-50 text-gray-800">
@@ -50,6 +52,14 @@
       </div>
 
       <input type="hidden" id="clienteSelect">
+    </div>
+
+    <!-- ================= FECHA ================= -->
+    <div class="mb-4">
+      <label class="block mb-1 font-medium">Fecha</label>
+      <input type="text"
+        id="fechaFactura"
+        class="w-full p-3 border rounded-lg bg-white shadow-sm">
     </div>
 
     <!-- ================= TIPO (IGUAL CLIENTE) ================= -->
