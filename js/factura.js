@@ -631,7 +631,7 @@ async function generarFacturaPDF() {
   <!-- HEADER -->
   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
 
-    <img src="imagenes/logo.png" style="height:55px; object-fit: contain;" />
+    <img src="imagenes/logo.png" style="height:100px; object-fit: contain;" />
 
     <div style="text-align:right;">
       <h2 style="margin:0; font-size:14px;">

@@ -535,7 +535,7 @@ async function generarAbonoPDF({ factura, clienteNombre, ultimoAbono }) {
   ">
 
     <!-- LOGO -->
-    <img src="imagenes/logo.png" style="height: 55px;" />
+    <img src="imagenes/logo.png" style="height: 100px;" />
 
     <!-- TITULO CENTRADO REAL -->
     <div style="
@@ -860,7 +860,7 @@ window.descargarFacturaCompleta = async (facturaId) => {
     <!-- HEADER -->
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
 
-      <img src="imagenes/logo.png" style="height:55px;" />
+      <img src="imagenes/logo.png" style="height:100px;" />
 
       <div style="text-align:right;">
         <h2 style="margin:0; font-size:14px;">
