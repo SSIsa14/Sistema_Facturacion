@@ -1,6 +1,14 @@
 import { supabase } from './supabase.js'
 import { cargarModalCliente, abrirModalCliente } from './modalCliente.js'
 
+function fmtFecha(fecha) {
+  if (!fecha) return ''
+  const str = /^\d{4}-\d{2}-\d{2}$/.test(fecha)
+    ? `${fecha}T12:00:00`
+    : fecha
+  return new Date(str).toLocaleDateString()
+}
+
 // =============================
 // ELEMENTOS
 // =============================
@@ -639,7 +647,7 @@ async function generarFacturaPDF() {
       </h2>
 
       <p style="margin:0; font-size:11px;">
-        ${new Date(facturaGuardada.fecha).toLocaleDateString()}
+        ${fmtFecha(facturaGuardada.fecha)}
       </p>
 
       <p style="margin:0; font-size:11px;">

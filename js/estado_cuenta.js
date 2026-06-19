@@ -16,6 +16,7 @@ const modalAbono = document.getElementById('modalAbono')
 const modalPendiente = document.getElementById('modalPendiente')
 const modalRestante = document.getElementById('modalRestante')
 const inputAbono = document.getElementById('inputAbono')
+const inputFechaAbono = document.getElementById('inputFechaAbono')
 const cancelarAbono = document.getElementById('cancelarAbono')
 const confirmarAbono = document.getElementById('confirmarAbono')
 
@@ -41,6 +42,18 @@ function formatearFechaGuate(fecha) {
   return new Date(fecha).toLocaleDateString('sv-SE', {
     timeZone: 'America/Guatemala'
   })
+}
+
+// Muestra una fecha correctamente en Guatemala.
+// Las cadenas solo-fecha (YYYY-MM-DD) se parsean como UTC por JS,
+// lo que retrocede un día en zonas UTC-. Agregar T12:00:00 fuerza
+// el parsing como hora local y no cruza el límite de medianoche.
+function fmtFecha(fecha) {
+  if (!fecha) return ''
+  const str = /^\d{4}-\d{2}-\d{2}$/.test(fecha)
+    ? `${fecha}T12:00:00`
+    : fecha
+  return new Date(str).toLocaleDateString()
 }
 
 function filtrarFacturas() {
@@ -224,7 +237,7 @@ function renderFacturas(listaData = facturas) {
     })
 
     const fecha = f.fecha
-      ? new Date(f.fecha).toLocaleDateString()
+      ? fmtFecha(f.fecha)
       : ''
 
     lista.innerHTML += `
@@ -253,7 +266,26 @@ function renderFacturas(listaData = facturas) {
           ${fecha}
         </div>
 
+        <!-- BOTONES EDITAR / ELIMINAR FACTURA -->
+        <div class="flex justify-end gap-2">
+          <button onclick="abrirModalEditar('${f.id}')"
+            class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-100 text-gray-600
+                   hover:bg-primary/10 hover:text-primary border border-gray-200
+                   transition-all duration-200 text-xs font-semibold">
+            <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+            Editar
+          </button>
+          <button onclick="abrirConfirmarBorrarDirecto('${f.id}')"
+            class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-50 text-red-500
+                   hover:bg-red-100 border border-red-200
+                   transition-all duration-200 text-xs font-semibold">
+            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            Eliminar
+          </button>
+        </div>
+
       </div>
+
 
         <!-- RESUMEN IMPORTES -->
         <div class="grid grid-cols-3 gap-3 text-center mt-3">
@@ -355,7 +387,7 @@ function renderFacturas(listaData = facturas) {
 
           <i data-lucide="calendar" class="w-4 h-4 text-primary"></i>
 
-          ${a.fecha ? new Date(a.fecha).toLocaleDateString() : ''}
+          ${a.fecha ? fmtFecha(a.fecha) : ''}
 
         </div>
 
@@ -368,24 +400,34 @@ function renderFacturas(listaData = facturas) {
     </div>
 
     <!-- BOTONES -->
-    <div class="flex justify-end gap-4 pt-1">
+    <div class="flex justify-end gap-3 pt-1 flex-wrap">
 
       <button
         onclick='abrirModalAbonoDetalle(${JSON.stringify(a)})'
         class="flex items-center gap-1 text-pink-500 hover:text-pink-600">
-
         <i data-lucide="eye" class="w-4 h-4"></i>
         <span class="text-xs">Ver</span>
-
       </button>
 
       <button
         onclick='descargarAbonoIndividual(${JSON.stringify(a)}, ${JSON.stringify(f)}, "${nombreCliente.textContent.replace("Cliente: ", "")}")'
         class="flex items-center gap-1 text-green-600 hover:text-green-700">
-
         <i data-lucide="download" class="w-4 h-4"></i>
         <span class="text-xs">PDF</span>
+      </button>
 
+      <button
+        onclick='abrirModalEditarAbono(${JSON.stringify(a)}, ${JSON.stringify(f)})'
+        class="flex items-center gap-1 text-blue-500 hover:text-blue-700">
+        <i data-lucide="pencil" class="w-4 h-4"></i>
+        <span class="text-xs">Editar</span>
+      </button>
+
+      <button
+        onclick='abrirConfirmarBorrarAbono(${JSON.stringify(a)}, ${JSON.stringify(f)})'
+        class="flex items-center gap-1 text-red-500 hover:text-red-700">
+        <i data-lucide="trash-2" class="w-4 h-4"></i>
+        <span class="text-xs">Eliminar</span>
       </button>
 
     </div>
@@ -420,6 +462,13 @@ window.abrirModalAbono = (facturaId, pendiente) => {
   modalRestante.textContent = `C$  ${pendiente.toFixed(2)}`
   inputAbono.value = ''
 
+  // Pre-llenar con la fecha de hoy (formato YYYY-MM-DD local)
+  const hoy = new Date()
+  const yyyy = hoy.getFullYear()
+  const mm = String(hoy.getMonth() + 1).padStart(2, '0')
+  const dd = String(hoy.getDate()).padStart(2, '0')
+  inputFechaAbono.value = `${yyyy}-${mm}-${dd}`
+
   modalAbono.classList.remove('hidden')
   modalAbono.classList.add('flex')
 }
@@ -453,10 +502,15 @@ confirmarAbono.onclick = async () => {
   }
 
   // GUARDAR
+  // Usar la fecha elegida por el usuario (medianoche hora local → ISO)
+  const fechaSeleccionada = inputFechaAbono.value
+    ? new Date(`${inputFechaAbono.value}T12:00:00`).toISOString()
+    : new Date().toISOString()
+
   const { data } = await supabase.from('abonos').insert([{
     factura_id: facturaActual.id,
     monto,
-    fecha: new Date().toISOString()
+    fecha: fechaSeleccionada
   }]).select().single()
 
   ultimoAbono = data
@@ -556,7 +610,7 @@ async function generarAbonoPDF({ factura, clienteNombre, ultimoAbono }) {
 
     <!-- INFO -->
     <div style="margin-bottom: 8px; font-size: 12px; line-height:1.3;">
-      <p style="margin:2px 0;"><b>Fecha:</b> ${new Date(ultimoAbono.fecha).toLocaleDateString()}</p>
+      <p style="margin:2px 0;"><b>Fecha:</b> ${fmtFecha(ultimoAbono.fecha)}</p>
       <p style="margin:2px 0;"><b>Cliente:</b> ${clienteNombre}</p>
       <p style="margin:2px 0;"><b>Factura:</b> #${factura.numero}</p>
     </div>
@@ -722,7 +776,7 @@ window.abrirModalAbonoDetalle = (a) => {
 
         <div class="flex items-center gap-2 text-sm text-gray-600">
           <i data-lucide="calendar" class="w-4 h-4 text-primary"></i>
-          ${a.fecha ? new Date(a.fecha).toLocaleDateString() : ''}
+          ${a.fecha ? fmtFecha(a.fecha) : ''}
         </div>
 
 
@@ -819,7 +873,7 @@ window.descargarFacturaCompleta = async (facturaId) => {
                   </td>
 
                   <td style="padding:4px; border-bottom:1px solid #eee;">
-                    ${new Date(a.fecha).toLocaleDateString()}
+                    ${fmtFecha(a.fecha)}
                   </td>
 
                   <td style="padding:4px; text-align:right; border-bottom:1px solid #eee;">
@@ -868,7 +922,7 @@ window.descargarFacturaCompleta = async (facturaId) => {
         </h2>
 
         <p style="margin:0; font-size:11px;">
-          ${new Date(factura.fecha).toLocaleDateString()}
+          ${fmtFecha(factura.fecha)}
         </p>
 
         <p style="margin:0; font-size:11px;">
@@ -1003,3 +1057,484 @@ window.descargarFacturaCompleta = async (facturaId) => {
 document.addEventListener('DOMContentLoaded', () => {
   cargarEstado()
 })
+
+
+// ============================================================
+// EDITAR FACTURA
+// ============================================================
+let facturaEditando = null
+let categoriasEdit = []
+let subcategoriasEdit = []
+
+const modalEditarFactura    = document.getElementById('modalEditarFactura')
+const modalConfirmarBorrar  = document.getElementById('modalConfirmarBorrar')
+const editFechaFactura      = document.getElementById('editFechaFactura')
+const editTipoFactura       = document.getElementById('editTipoFactura')
+const editSaldoAnterior     = document.getElementById('editSaldoAnterior')
+const editProductosLista    = document.getElementById('editProductosLista')
+const editSubtotalEl        = document.getElementById('editSubtotal')
+const editSaldoDisplayEl    = document.getElementById('editSaldoDisplay')
+const editTotalEl           = document.getElementById('editTotal')
+const editFacturaTitulo     = document.getElementById('editFacturaTitulo')
+const textoBorradoAdv       = document.getElementById('textoBorradoAdvertencia')
+
+// Cargar cats/subcats una sola vez
+async function cargarCatalogoEdicion() {
+  if (categoriasEdit.length) return
+  const { data: cats }  = await supabase.from('categorias').select('*')
+  const { data: subs }  = await supabase.from('subcategorias').select('*')
+  categoriasEdit    = cats || []
+  subcategoriasEdit = subs || []
+}
+
+// Abre el modal pre-cargado con los datos de la factura
+window.abrirModalEditar = async (facturaId) => {
+  await cargarCatalogoEdicion()
+
+  facturaEditando = facturas.find(f => f.id === facturaId)
+  if (!facturaEditando) return
+
+  editFacturaTitulo.textContent = `Factura #${facturaEditando.numero}`
+
+  // Fecha
+  if (facturaEditando.fecha) {
+    const d = new Date(facturaEditando.fecha)
+    const yyyy = d.getFullYear()
+    const mm   = String(d.getMonth() + 1).padStart(2, '0')
+    const dd   = String(d.getDate()).padStart(2, '0')
+    editFechaFactura.value = `${yyyy}-${mm}-${dd}`
+  }
+
+  // Tipo
+  editTipoFactura.value = facturaEditando.tipo || 'credito'
+
+  // Saldo anterior
+  editSaldoAnterior.value = facturaEditando.saldo_anterior || 0
+
+  // Cargar productos de BD
+  const { data: prods } = await supabase
+    .from('productos_factura')
+    .select('*')
+    .eq('factura_id', facturaId)
+
+  editProductosLista.innerHTML = ''
+  ;(prods || []).forEach(p => editAgregarFilaProducto(p))
+
+  editRecalcularTotal()
+
+  // Mostrar modal
+  modalEditarFactura.classList.remove('hidden')
+  modalEditarFactura.classList.add('flex')
+  lucide.createIcons()
+}
+
+// Cierra el modal
+window.cerrarModalEditar = () => {
+  modalEditarFactura.classList.add('hidden')
+  modalEditarFactura.classList.remove('flex')
+}
+
+// Agrega una fila de producto al modal (nueva o con datos existentes)
+window.editAgregarProducto = () => editAgregarFilaProducto(null)
+
+function editAgregarFilaProducto(prod = null) {
+
+  const fila = document.createElement('div')
+  fila.className = 'bg-gray-50 border rounded-xl p-3 space-y-2 relative'
+
+  // Guardar el id del producto si existe (para actualizar en BD)
+  fila.dataset.prodId = prod?.id || ''
+
+  fila.innerHTML = `
+    <div class="grid grid-cols-2 gap-2">
+
+      <!-- PRODUCTO (subcategoría) -->
+      <div class="col-span-2 relative">
+        <label class="text-xs text-gray-500">Producto</label>
+        <div class="relative">
+          <button type="button" class="editProdBtn w-full flex justify-between items-center p-2 border rounded-lg bg-white text-sm text-gray-700 mt-1">
+            <span class="editProdSpan">${prod?.descripcion || 'Seleccionar...'}</span>
+            <i data-lucide="chevron-down" class="w-4 h-4 text-gray-400 flex-shrink-0"></i>
+          </button>
+          <div class="editProdList hidden absolute z-[200] mt-1 w-full bg-white border rounded-xl shadow-lg max-h-48 overflow-auto">
+            <div class="p-2 border-b sticky top-0 bg-white">
+              <input type="text" class="editBuscarSub w-full p-1.5 border rounded text-xs" placeholder="Buscar...">
+            </div>
+            <div class="editSubItems">
+              ${buildSubcatOptions()}
+            </div>
+          </div>
+          <input type="hidden" class="editSubcatId" value="${prod?.subcategoria_id || ''}">
+        </div>
+      </div>
+
+      <!-- DESCRIPCIÓN -->
+      <div class="col-span-2">
+        <label class="text-xs text-gray-500">Descripción</label>
+        <input type="text" class="editDesc w-full p-2 border rounded-lg text-sm mt-1"
+          value="${prod?.descripcion || ''}" placeholder="Descripción">
+      </div>
+
+      <!-- CANTIDAD -->
+      <div>
+        <label class="text-xs text-gray-500">Cantidad</label>
+        <input type="number" class="editCant w-full p-2 border rounded-lg text-sm mt-1"
+          value="${prod?.cantidad || 1}" min="0">
+      </div>
+
+      <!-- PRECIO -->
+      <div>
+        <label class="text-xs text-gray-500">Precio (C$)</label>
+        <input type="number" class="editPrecio w-full p-2 border rounded-lg text-sm mt-1"
+          value="${prod?.precio || 0}" min="0" step="0.01">
+      </div>
+
+    </div>
+
+    <!-- SUBTOTAL + ELIMINAR -->
+    <div class="flex justify-between items-center pt-1">
+      <span class="text-xs text-gray-500">Subtotal: C$ <span class="editSubtotalFila font-semibold">
+        ${prod ? (prod.cantidad * prod.precio).toFixed(2) : '0.00'}
+      </span></span>
+      <button type="button" class="editEliminarFila text-red-500 hover:text-red-700 text-xs flex items-center gap-1">
+        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Eliminar
+      </button>
+    </div>
+  `
+
+  editProductosLista.appendChild(fila)
+
+  // Dropdown subcategorías
+  const btn    = fila.querySelector('.editProdBtn')
+  const list   = fila.querySelector('.editProdList')
+  const span   = fila.querySelector('.editProdSpan')
+  const hidden = fila.querySelector('.editSubcatId')
+  const buscar = fila.querySelector('.editBuscarSub')
+
+  btn.onclick = (e) => { e.stopPropagation(); list.classList.toggle('hidden') }
+
+  document.addEventListener('click', (e) => {
+    if (!fila.contains(e.target)) list.classList.add('hidden')
+  }, { once: false })
+
+  fila.querySelectorAll('.editSubItem').forEach(item => {
+    item.onclick = () => {
+      hidden.value     = item.dataset.id
+      span.textContent = item.dataset.name
+      list.classList.add('hidden')
+      // Pre-llenar descripción con nombre del producto si está vacía
+      const descInput = fila.querySelector('.editDesc')
+      if (!descInput.value) descInput.value = item.dataset.name
+      editRecalcularTotal()
+    }
+  })
+
+  buscar.addEventListener('click', e => e.stopPropagation())
+  buscar.addEventListener('input', () => {
+    const val = buscar.value.toLowerCase()
+    fila.querySelectorAll('.editSubItem').forEach(item => {
+      item.style.display = item.dataset.name.toLowerCase().includes(val) ? 'block' : 'none'
+    })
+  })
+
+  // Cálculo en tiempo real
+  const cant   = fila.querySelector('.editCant')
+  const precio = fila.querySelector('.editPrecio')
+  const subEl  = fila.querySelector('.editSubtotalFila')
+
+  const recalcFila = () => {
+    subEl.textContent = (Number(cant.value) * Number(precio.value)).toFixed(2)
+    editRecalcularTotal()
+  }
+
+  cant.oninput   = recalcFila
+  precio.oninput = recalcFila
+
+  // Eliminar fila
+  fila.querySelector('.editEliminarFila').onclick = () => {
+    fila.remove()
+    editRecalcularTotal()
+  }
+
+  lucide.createIcons()
+}
+
+// Genera las opciones de subcategorías agrupadas por categoría
+function buildSubcatOptions() {
+  return categoriasEdit.map(cat => {
+    const subs = subcategoriasEdit.filter(s => s.categoria_id === cat.id)
+    if (!subs.length) return ''
+    return `
+      <div class="text-xs font-bold text-gray-400 px-2 pt-2">${cat.nombre}</div>
+      ${subs.map(s => `
+        <div class="editSubItem p-2 hover:bg-primary/10 cursor-pointer text-sm"
+          data-id="${s.id}" data-name="${s.nombre}">
+          ${s.nombre}
+        </div>
+      `).join('')}
+    `
+  }).join('')
+}
+
+// Recalcula totales del modal de edición
+function editRecalcularTotal() {
+  let subtotal = 0
+  editProductosLista.querySelectorAll('.editSubtotalFila').forEach(el => {
+    subtotal += Number(el.textContent) || 0
+  })
+  const saldo = Number(editSaldoAnterior.value) || 0
+  const total = subtotal + saldo
+
+  editSubtotalEl.textContent    = subtotal.toFixed(2)
+  editSaldoDisplayEl.textContent = saldo.toFixed(2)
+  editTotalEl.textContent        = total.toFixed(2)
+}
+
+editSaldoAnterior.addEventListener('input', editRecalcularTotal)
+
+// GUARDAR CAMBIOS
+window.guardarEdicionFactura = async () => {
+  if (!facturaEditando) return
+
+  const fecha = editFechaFactura.value
+    ? new Date(`${editFechaFactura.value}T12:00:00`).toISOString()
+    : facturaEditando.fecha
+
+  const tipo        = editTipoFactura.value
+  const saldoAnterior = Number(editSaldoAnterior.value) || 0
+
+  // Calcular subtotal y total
+  let subtotal = 0
+  editProductosLista.querySelectorAll('.editSubtotalFila').forEach(el => {
+    subtotal += Number(el.textContent) || 0
+  })
+  const nuevoTotal = subtotal + saldoAnterior
+
+  // Determinar estado según tipo y abonos
+  const abonosDeEstaFactura = abonos.filter(a => a.factura_id === facturaEditando.id)
+  const totalAbonado = abonosDeEstaFactura.reduce((s, a) => s + Number(a.monto), 0)
+  let nuevoEstado
+  if (tipo === 'contado') {
+    nuevoEstado = 'pagado'
+  } else if (totalAbonado >= nuevoTotal) {
+    nuevoEstado = 'pagado'
+  } else if (totalAbonado > 0) {
+    nuevoEstado = 'abonado'
+  } else {
+    nuevoEstado = 'pendiente'
+  }
+
+  // 1. Actualizar factura
+  await supabase.from('facturas').update({
+    fecha,
+    tipo,
+    estado: nuevoEstado,
+    total: nuevoTotal,
+    saldo_anterior: saldoAnterior
+  }).eq('id', facturaEditando.id)
+
+  // 2. Reemplazar productos: eliminar los viejos e insertar los nuevos
+  await supabase.from('productos_factura').delete().eq('factura_id', facturaEditando.id)
+
+  const filas = editProductosLista.querySelectorAll('[data-prod-id]')
+  const nuevosProductos = []
+
+  filas.forEach(fila => {
+    const subcatId = fila.querySelector('.editSubcatId').value
+    const desc     = fila.querySelector('.editDesc').value
+    const cant     = Number(fila.querySelector('.editCant').value)
+    const precio   = Number(fila.querySelector('.editPrecio').value)
+
+    if (desc || subcatId) {
+      nuevosProductos.push({
+        factura_id:      facturaEditando.id,
+        subcategoria_id: subcatId || null,
+        descripcion:     desc,
+        cantidad:        cant,
+        precio
+      })
+    }
+  })
+
+  if (nuevosProductos.length) {
+    await supabase.from('productos_factura').insert(nuevosProductos)
+  }
+
+  cerrarModalEditar()
+  await cargarEstado()
+}
+
+
+// ============================================================
+// ELIMINAR FACTURA
+// ============================================================
+window.abrirConfirmarBorrar = () => {
+  if (!facturaEditando) return
+
+  const abonosCount = abonos.filter(a => a.factura_id === facturaEditando.id).length
+
+  let advertencia = `Se eliminará la factura <strong>#${facturaEditando.numero}</strong> de forma permanente.`
+  advertencia += `<br><br>También se eliminarán:`
+  advertencia += `<br>• Todos los productos de la factura`
+  if (abonosCount > 0) {
+    advertencia += `<br>• <strong>${abonosCount} abono(s)</strong> registrado(s)`
+  }
+  advertencia += `<br><br><span class="text-red-600 font-semibold">Esta acción no se puede deshacer.</span>`
+
+  textoBorradoAdv.innerHTML = advertencia
+
+  modalConfirmarBorrar.classList.remove('hidden')
+  modalConfirmarBorrar.classList.add('flex')
+  lucide.createIcons()
+}
+
+window.cerrarConfirmarBorrar = () => {
+  modalConfirmarBorrar.classList.add('hidden')
+  modalConfirmarBorrar.classList.remove('flex')
+}
+
+window.confirmarEliminarFactura = async () => {
+  if (!facturaEditando) return
+
+  // Eliminar en orden correcto (FK constraints)
+  await supabase.from('abonos').delete().eq('factura_id', facturaEditando.id)
+  await supabase.from('productos_factura').delete().eq('factura_id', facturaEditando.id)
+  await supabase.from('facturas').delete().eq('id', facturaEditando.id)
+
+  cerrarConfirmarBorrar()
+  cerrarModalEditar()
+  facturaEditando = null
+  await cargarEstado()
+}
+
+// Eliminar factura DIRECTAMENTE desde la tarjeta (sin abrir el modal de edición)
+window.abrirConfirmarBorrarDirecto = async (facturaId) => {
+  await cargarCatalogoEdicion()
+  facturaEditando = facturas.find(f => f.id === facturaId)
+  if (!facturaEditando) return
+  abrirConfirmarBorrar()
+}
+
+
+// ============================================================
+// EDITAR ABONO
+// ============================================================
+let abonoEditando     = null
+let facturaDelAbono   = null
+
+const modalEditarAbono        = document.getElementById('modalEditarAbono')
+const modalConfirmarBorrarAb  = document.getElementById('modalConfirmarBorrarAbono')
+const editAbonoMontoEl        = document.getElementById('editAbonoMonto')
+const editAbonoFechaEl        = document.getElementById('editAbonoFecha')
+const textoBorradoAbonoEl     = document.getElementById('textoBorradoAbono')
+
+window.abrirModalEditarAbono = (abono, factura) => {
+  abonoEditando   = abono
+  facturaDelAbono = factura
+
+  editAbonoMontoEl.value = Number(abono.monto).toFixed(2)
+
+  if (abono.fecha) {
+    const d    = new Date(abono.fecha)
+    const yyyy = d.getFullYear()
+    const mm   = String(d.getMonth() + 1).padStart(2, '0')
+    const dd   = String(d.getDate()).padStart(2, '0')
+    editAbonoFechaEl.value = `${yyyy}-${mm}-${dd}`
+  }
+
+  modalEditarAbono.classList.remove('hidden')
+  modalEditarAbono.classList.add('flex')
+}
+
+window.cerrarModalEditarAbono = () => {
+  modalEditarAbono.classList.add('hidden')
+  modalEditarAbono.classList.remove('flex')
+}
+
+window.guardarEdicionAbono = async () => {
+  if (!abonoEditando) return
+
+  const nuevoMonto = Number(editAbonoMontoEl.value)
+  if (nuevoMonto <= 0) { alert('Monto inválido'); return }
+
+  const nuevaFecha = editAbonoFechaEl.value
+    ? new Date(`${editAbonoFechaEl.value}T12:00:00`).toISOString()
+    : abonoEditando.fecha
+
+  // Actualizar abono
+  await supabase.from('abonos')
+    .update({ monto: nuevoMonto, fecha: nuevaFecha })
+    .eq('id', abonoEditando.id)
+
+  // Recalcular estado de la factura
+  await recalcularEstadoFactura(facturaDelAbono.id)
+
+  cerrarModalEditarAbono()
+  await cargarEstado()
+}
+
+
+// ============================================================
+// ELIMINAR ABONO
+// ============================================================
+window.abrirConfirmarBorrarAbono = (abono, factura) => {
+  abonoEditando   = abono
+  facturaDelAbono = factura
+
+  textoBorradoAbonoEl.innerHTML = `
+    Se eliminará el abono de <strong>C$ ${Number(abono.monto).toFixed(2)}</strong>
+    de la factura <strong>#${factura.numero}</strong>.<br><br>
+    <span class="text-red-600 font-semibold">Esta acción no se puede deshacer.</span>
+  `
+
+  modalConfirmarBorrarAb.classList.remove('hidden')
+  modalConfirmarBorrarAb.classList.add('flex')
+  lucide.createIcons()
+}
+
+window.cerrarConfirmarBorrarAbono = () => {
+  modalConfirmarBorrarAb.classList.add('hidden')
+  modalConfirmarBorrarAb.classList.remove('flex')
+}
+
+window.confirmarEliminarAbono = async () => {
+  if (!abonoEditando) return
+
+  await supabase.from('abonos').delete().eq('id', abonoEditando.id)
+
+  // Recalcular estado de la factura
+  await recalcularEstadoFactura(facturaDelAbono.id)
+
+  cerrarConfirmarBorrarAbono()
+  abonoEditando   = null
+  facturaDelAbono = null
+  await cargarEstado()
+}
+
+
+// Recalcula y actualiza el estado de una factura según sus abonos actuales
+async function recalcularEstadoFactura(facturaId) {
+  const factura = facturas.find(f => f.id === facturaId)
+  if (!factura) return
+
+  const { data: abonosActuales } = await supabase
+    .from('abonos').select('monto').eq('factura_id', facturaId)
+
+  const totalAbonado = (abonosActuales || [])
+    .reduce((s, a) => s + Number(a.monto), 0)
+
+  let nuevoEstado
+  if (factura.tipo === 'contado') {
+    nuevoEstado = 'pagado'
+  } else if (totalAbonado >= Number(factura.total)) {
+    nuevoEstado = 'pagado'
+  } else if (totalAbonado > 0) {
+    nuevoEstado = 'abonado'
+  } else {
+    nuevoEstado = 'pendiente'
+  }
+
+  await supabase.from('facturas')
+    .update({ estado: nuevoEstado })
+    .eq('id', facturaId)
+}
