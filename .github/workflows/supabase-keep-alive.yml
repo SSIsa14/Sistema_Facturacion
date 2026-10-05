@@ -1,0 +1,35 @@
+name: Supabase Keep Alive
+
+on:
+  schedule:
+    - cron: "0 14 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  keep-alive:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Usa la misma URL y llave pública (anon) que ya usa la app en js/supabase.js
+      - name: Consultar Supabase
+        run: |
+          URL=$(grep -oE "supabaseUrl = '[^']+'" js/supabase.js | cut -d"'" -f2)
+          KEY=$(grep -oE "supabaseKey = '[^']+'" js/supabase.js | cut -d"'" -f2)
+          for tabla in categorias clientes facturas; do
+            curl --fail -sS -o /dev/null -w "$tabla: HTTP %{http_code}\n" \
+              "$URL/rest/v1/$tabla?select=id&limit=1" \
+              -H "apikey: $KEY" \
+              -H "Authorization: Bearer $KEY"
+            sleep 5
+          done
+
+      # GitHub desactiva los cron de repos sin commits en 60 días; re-habilitarlo reinicia ese contador
+      - name: Mantener activo el workflow
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow enable supabase-keep-alive.yml --repo "${{ github.repository }}"
