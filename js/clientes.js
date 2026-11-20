@@ -171,17 +171,7 @@ function renderClientes(lista) {
 window.editar = (id) => {
   const c = clientes.find(x => x.id === id)
 
-  abrirModalCliente(async () => {
-    cargarClientes()
-  })
-
-  // esperar a que el modal cargue
-  setTimeout(() => {
-    document.getElementById('nombreCliente').value = c.nombre
-    document.getElementById('telefonoCliente').value = c.telefono || ''
-    document.getElementById('direccionCliente').value = c.direccion || ''
-    document.getElementById('departamentoCliente').value = c.departamento || ''
-  }, 100)
+  abrirModalCliente(() => cargarClientes(), c)
 }
 
 // =============================

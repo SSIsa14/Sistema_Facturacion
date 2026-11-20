@@ -348,7 +348,7 @@ window.descargarPDFHistorial = async (id) => {
   
     const colorRestante = restante > 0 ? 'text-red-600' : 'text-green-600'
 
-if (listaAbonos.length) {
+if (listaAbonos.length && factura.tipo !== 'contado') {
   htmlAbonos = `
     <div style="margin-top:10px;">
       <h3 style="font-size:13px; margin-bottom:4px;">
@@ -389,12 +389,6 @@ if (listaAbonos.length) {
         <p style="margin:2px 0;"><b>Total abonado:</b> C$ ${totalAbonado.toFixed(2)}</p>
         <p style="margin:2px 0;"><b>Restante:</b> C$ ${restante.toFixed(2)}</p>
       </div>
-    </div>
-  `
-}else{
-  htmlAbonos = `
-    <div style="margin-top:10px; font-size:12px; color:#666;">
-      <p><b>Sin abonos registrados</b></p>
     </div>
   `
 }
@@ -549,7 +543,7 @@ await html2pdf()
       orientation: 'portrait'
     },
     pagebreak: {
-      mode: ['css', 'legacy'],
+      mode: ['avoid-all', 'css', 'legacy'],
       avoid: 'tr'
     }
   })

@@ -535,6 +535,22 @@ guardarBtn.onclick = async () => {
 
   if (!clienteSelect.value) return alert("Selecciona cliente")
 
+  // evita doble toque en el teléfono (creaba la factura dos veces)
+  if (guardarBtn.disabled) return
+  guardarBtn.disabled = true
+  guardarBtn.textContent = 'Guardando...'
+
+  try {
+    await guardarFactura()
+  } catch (err) {
+    console.error(err)
+    alert('Error al guardar la factura, revisa tu conexión')
+    guardarBtn.disabled = false
+    guardarBtn.textContent = 'Guardar'
+  }
+}
+
+async function guardarFactura() {
   const tipo = tipoInput.value
   const estado = tipo === 'contado' ? 'pagado' : 'pendiente'
 
@@ -543,7 +559,7 @@ guardarBtn.onclick = async () => {
 
   const fechaSeleccionada = calendario.selectedDates[0] || new Date()
 
-  const { data: factura } = await supabase
+  const { data: factura, error } = await supabase
     .from('facturas')
     .insert([{
       cliente_id: clienteSelect.value,
@@ -555,7 +571,8 @@ guardarBtn.onclick = async () => {
     }])
     .select()
     .single()
-  
+  if (error) throw error
+
   facturaGuardada = factura
 
   const detalles = []
@@ -587,7 +604,12 @@ guardarBtn.onclick = async () => {
     })
   })
 
-  await supabase.from('productos_factura').insert(detalles)
+  const { error: errorDetalles } = await supabase.from('productos_factura').insert(detalles)
+  if (errorDetalles) {
+    // sin esto quedaba una factura sin productos; se borra para que reintentar no la duplique
+    await supabase.from('facturas').delete().eq('id', factura.id)
+    throw errorDetalles
+  }
 
   modalSuccess.classList.remove('hidden')
   modalSuccess.classList.add('flex')
@@ -761,7 +783,7 @@ await html2pdf()
       scrollY: 0
     },
     jsPDF: { unit: 'in', format: [4.25, 5.5], orientation: 'portrait' },
-    pagebreak: { mode: ['css', 'legacy'], avoid: 'tr' }
+    pagebreak: { mode: ['avoid-all', 'css', 'legacy'], avoid: 'tr' }
   })
   .save()
 

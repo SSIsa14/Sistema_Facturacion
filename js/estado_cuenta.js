@@ -127,6 +127,8 @@ btnPagado.onclick = () => {
 // =============================
 // CARGAR DATA
 // =============================
+let clienteActual = null
+
 async function cargarEstado() {
 
   const { data: cliente } = await supabase
@@ -135,6 +137,7 @@ async function cargarEstado() {
     .eq('id', clienteId)
     .single()
 
+  clienteActual = cliente
   nombreCliente.textContent = `Cliente: ${cliente.nombre}`
 
   const { data: factData } = await supabase
@@ -356,7 +359,8 @@ function renderFacturas(listaData = facturas) {
 
       </div>
 
-      <!-- DROPDOWN ABONOS -->
+      <!-- DROPDOWN ABONOS (solo si hay) -->
+      ${abonosFactura.length ? `
       <div class="mt-2">
 
         <details class="group bg-gray-50 rounded-lg p-2">
@@ -442,6 +446,7 @@ function renderFacturas(listaData = facturas) {
         </details>
 
       </div>
+      ` : ''}
 
       </div>
     `
@@ -493,6 +498,17 @@ cancelarAbono.onclick = () => {
 // CONFIRMAR ABONO
 // =============================
 confirmarAbono.onclick = async () => {
+  // evita doble toque (registraba el abono dos veces)
+  if (confirmarAbono.disabled) return
+  confirmarAbono.disabled = true
+  try {
+    await registrarAbono()
+  } finally {
+    confirmarAbono.disabled = false
+  }
+}
+
+async function registrarAbono() {
 
   const monto = Number(inputAbono.value)
 
@@ -507,11 +523,12 @@ confirmarAbono.onclick = async () => {
     ? new Date(`${inputFechaAbono.value}T12:00:00`).toISOString()
     : new Date().toISOString()
 
-  const { data } = await supabase.from('abonos').insert([{
+  const { data, error } = await supabase.from('abonos').insert([{
     factura_id: facturaActual.id,
     monto,
     fecha: fechaSeleccionada
   }]).select().single()
+  if (error) return alert('Error al guardar el abono, revisa tu conexión')
 
   ultimoAbono = data
 
@@ -656,7 +673,7 @@ async function generarAbonoPDF({ factura, clienteNombre, ultimoAbono }) {
 
     <!-- FOOTER -->
     <div style="margin-top: 14px; text-align: center; font-size: 10px; color: #999;">
-      <p>Gracias por su preferencia, será un gusto atenderle nuevamente</p>
+      <p style="margin:0;">Gracias por su preferencia, será un gusto atenderle nuevamente</p>
     </div>
 
   </div>
@@ -679,7 +696,7 @@ async function generarAbonoPDF({ factura, clienteNombre, ultimoAbono }) {
       format: [4.25, 5.5],
       orientation: 'portrait'
     },
-    pagebreak: { mode: ['css', 'legacy'], avoid: 'tr' }
+    pagebreak: { mode: ['avoid-all', 'css', 'legacy'], avoid: 'tr' }
   }
 
     await new Promise(requestAnimationFrame)
@@ -848,7 +865,7 @@ window.descargarFacturaCompleta = async (facturaId) => {
   // ===== HISTORIAL =====
   let htmlAbonos = ''
 
-  if (listaAbonos.length) {
+  if (listaAbonos.length && factura.tipo !== 'contado') {
     htmlAbonos = `
       <div style="margin-top:10px;">
         <h3 style="font-size:13px; margin-bottom:4px;">
@@ -891,12 +908,6 @@ window.descargarFacturaCompleta = async (facturaId) => {
         </div>
       </div>
     `
-  } else {
-    htmlAbonos = `
-      <div style="margin-top:10px; font-size:12px; color:#666;">
-        <p><b>Sin abonos registrados</b></p>
-      </div>
-    `
   }
 
   // ===== HTML =====
@@ -930,6 +941,15 @@ window.descargarFacturaCompleta = async (facturaId) => {
         </p>
       </div>
     </div>
+
+    <!-- CLIENTE -->
+    <div style="margin-bottom:6px; font-size:12px; line-height:1.3;">
+      <p style="margin:2px 0;"><b>Cliente:</b> ${clienteActual?.nombre || ''}</p>
+      <p style="margin:2px 0;"><b>Dirección:</b> ${clienteActual?.direccion || '-'}</p>
+      <p style="margin:2px 0;"><b>Tel:</b> ${clienteActual?.telefono || '-'}</p>
+    </div>
+
+    <hr style="margin:6px 0;">
 
     <!-- TABLA -->
     <table style="width:100%; border-collapse: collapse; font-size:12px;">
@@ -1044,7 +1064,7 @@ window.descargarFacturaCompleta = async (facturaId) => {
         orientation: 'portrait'
       },
       pagebreak: {
-        mode: ['css', 'legacy'],
+        mode: ['avoid-all', 'css', 'legacy'],
         avoid: 'tr'
       }
     })
@@ -1293,8 +1313,19 @@ function editRecalcularTotal() {
 editSaldoAnterior.addEventListener('input', editRecalcularTotal)
 
 // GUARDAR CAMBIOS
+let guardandoEdicion = false
 window.guardarEdicionFactura = async () => {
-  if (!facturaEditando) return
+  if (!facturaEditando || guardandoEdicion) return
+  // doble toque borraba e insertaba productos dos veces → productos duplicados
+  guardandoEdicion = true
+  try {
+    await guardarEdicionFacturaInterno()
+  } finally {
+    guardandoEdicion = false
+  }
+}
+
+async function guardarEdicionFacturaInterno() {
 
   const fecha = editFechaFactura.value
     ? new Date(`${editFechaFactura.value}T12:00:00`).toISOString()
