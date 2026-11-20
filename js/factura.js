@@ -750,7 +750,7 @@ async function generarFacturaPDF() {
   </div>
 
   <!-- FOOTER -->
-  <div style="margin-top:12px; text-align:center; font-size:10px; color:#888;">
+  <div style="margin-top:12px; text-align:center; font-size:10px; color:#E13C96; font-weight:bold;">
     Gracias por su preferencia, será un gusto atenderle nuevamente
   </div>
 

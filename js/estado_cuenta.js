@@ -672,7 +672,7 @@ async function generarAbonoPDF({ factura, clienteNombre, ultimoAbono }) {
     </div>
 
     <!-- FOOTER -->
-    <div style="margin-top: 14px; text-align: center; font-size: 10px; color: #999;">
+    <div style="margin-top: 14px; text-align: center; font-size: 10px; color:#E13C96; font-weight:bold;">
       <p style="margin:0;">Gracias por su preferencia, será un gusto atenderle nuevamente</p>
     </div>
 
@@ -1016,7 +1016,7 @@ window.descargarFacturaCompleta = async (facturaId) => {
     ${htmlAbonos}
 
     <!-- FOOTER -->
-    <div style="margin-top:12px; text-align:center; font-size:10px; color:#888;">
+    <div style="margin-top:12px; text-align:center; font-size:10px; color:#E13C96; font-weight:bold;">
       Gracias por su preferencia, será un gusto atenderle nuevamente
     </div>
 
