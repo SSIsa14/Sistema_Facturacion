@@ -20,7 +20,7 @@ openModalBtn.onclick = () => {
 // CARGAR CLIENTES
 // =============================
 async function cargarClientes() {
-  const { data } = await supabase.from('clientes').select('*')
+  const { data } = await supabase.from('clientes').select('*').order('nombre')
   clientes = data || []
   renderClientes(clientes)
 }

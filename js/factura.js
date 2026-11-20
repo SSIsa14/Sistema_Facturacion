@@ -89,7 +89,7 @@ document.addEventListener('click', (e) => {
 })
 
 async function cargarClientes() {
-  const { data } = await supabase.from('clientes').select('*')
+  const { data } = await supabase.from('clientes').select('*').order('nombre')
 
   clienteList.innerHTML = `
     <div class="p-2 border-b sticky top-0 bg-white z-10">
